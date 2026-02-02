@@ -1,0 +1,19 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Basılıyken renk -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="50dp" />
+            <solid android:color="#4169E1"/> <!-- Daha koyu mavi -->
+        </shape>
+    </item>
+
+    <!-- Normal halde renk -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="50dp" />
+            <solid android:color="#6495ED"/> <!-- Varsayılan mavi -->
+        </shape>
+    </item>
+
+</selector>

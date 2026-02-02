@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal|top"
+    android:paddingTop="50dp"
+    android:paddingLeft="18dp"
+    android:paddingRight="18dp"
+    android:background="#87CEFA">
+
+
+    <!-- Güncel Saat -->
+    <TextView
+        android:id="@+id/textCurrentTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Şu anda saat: 02:06"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- Açıklama -->
+    <TextView
+        android:id="@+id/textNowLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Şimdi uyursam saat kaçta kalkarım?"
+        android:textSize="16sp"
+        android:textColor="#000000"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="24dp"/>
+
+    <!-- Kestirme kutusu -->
+    <Button
+        android:id="@+id/btnNap"
+        android:layout_width="250dp"
+        android:layout_height="70dp"
+        android:background="@drawable/round_button"
+        android:text="02:30\nkestirme 25 dk"
+        android:textColor="#000000"
+        android:textSize="17sp"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Döngüler -->
+    <Button
+        android:id="@+id/btnCycle1"
+        android:layout_width="250dp"
+        android:layout_height="70dp"
+        android:background="@drawable/round_button"
+        android:text="03:51\n1 döngü 1s 45dk"
+        android:textColor="#000000"
+        android:textSize="17sp"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnCycle2"
+        android:layout_width="250dp"
+        android:layout_height="70dp"
+        android:background="@drawable/round_button"
+        android:text="05:21\n2 döngü 3s 17dk"
+        android:textColor="#000000"
+        android:textSize="17sp"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnCycle3"
+        android:layout_width="250dp"
+        android:layout_height="70dp"
+        android:background="@drawable/round_button"
+        android:text="06:51\n3 döngü 4s 45dk"
+        android:textColor="#000000"
+        android:textSize="17sp"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnCycle4"
+        android:layout_width="250dp"
+        android:layout_height="70dp"
+        android:background="@drawable/round_button"
+        android:text="08:21\n4 döngü 6s 17dk"
+        android:textColor="#000000"
+        android:textSize="17sp"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"/>
+    <Button
+        android:id="@+id/btnCycle5"
+        android:layout_width="250dp"
+        android:layout_height="70dp"
+        android:background="@drawable/round_button"
+        android:text="08:21\n5 döngü 7s 45dk"
+        android:textColor="#000000"
+        android:textSize="17sp"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"/>
+    <Button
+        android:id="@+id/btnCycle6"
+        android:layout_width="250dp"
+        android:layout_height="70dp"
+        android:background="@drawable/round_button"
+        android:text="08:21\n6 döngü 9s 17dk"
+        android:textColor="#000000"
+        android:textSize="17sp"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+
+</LinearLayout>

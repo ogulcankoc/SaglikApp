@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#01A2E5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:layout_marginTop="80dp">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vücut Kitle Endeksi (BMI)"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"
+            android:textColor="#000000"/>
+
+        <TextView
+            android:id="@+id/tvSummary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Boy/Kilo bilgileri"
+            android:textSize="16sp"
+            android:layout_marginBottom="12dp"
+            android:textColor="#000000"/>
+
+        <TextView
+            android:id="@+id/tvBmi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="VKİ: -"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"
+            android:textColor="#000000"/>
+
+        <TextView
+            android:id="@+id/tvCategory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Durum: -"
+            android:textSize="18sp"
+            android:layout_marginBottom="6dp"
+            android:textColor="#000000"/>
+
+        <TextView
+            android:id="@+id/tvIdeal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="İdeal kilo aralığı: -"
+            android:textSize="16sp"
+            android:layout_marginBottom="24dp"
+            android:textColor="#000000"/>
+
+    </LinearLayout>
+</ScrollView>

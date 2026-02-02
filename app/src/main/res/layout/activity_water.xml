@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#E3F2FD"
+    android:gravity="center_horizontal"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Su Takibi"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#1565C0"
+        android:layout_marginBottom="30dp"/>
+
+    <ProgressBar
+        android:id="@+id/progressBarWater"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:progress="0"
+        android:max="100" />
+
+    <TextView
+        android:id="@+id/txtProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 / 2500 ml"
+        android:textSize="24sp"
+        android:layout_marginTop="10dp"
+        android:textColor="#0D47A1"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="20dp"
+        android:background="#FFFFFF"
+        android:padding="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hedef (ml): "
+            android:textStyle="bold"/>
+
+        <EditText
+            android:id="@+id/editWaterGoal"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:inputType="number"
+            android:text="2500"
+            android:gravity="center"/>
+
+        <Button
+            android:id="@+id/btnUpdateGoal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Güncelle"
+            android:textSize="12sp"
+            android:layout_marginLeft="10dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="30dp">
+
+        <Button
+            android:id="@+id/btnAdd200"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+200 ml"
+            android:backgroundTint="#2196F3"
+            android:layout_marginRight="10dp"/>
+
+        <Button
+            android:id="@+id/btnAdd500"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+500 ml"
+            android:backgroundTint="#1976D2"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnResetWater"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sıfırla"
+        android:backgroundTint="#FF5252"
+        android:layout_marginTop="20dp"/>
+
+</LinearLayout>

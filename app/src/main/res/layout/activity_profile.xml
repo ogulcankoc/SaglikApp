@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Profilini Güncelle"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="30dp" />
+
+        <EditText
+            android:id="@+id/editProfileName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="İsim"
+            android:inputType="textPersonName"
+            android:layout_marginBottom="15dp" />
+
+        <EditText
+            android:id="@+id/editProfileAge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="Yaş"
+            android:inputType="number"
+            android:layout_marginBottom="15dp" />
+
+        <EditText
+            android:id="@+id/editProfileWeight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="Kilo (kg)"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="15dp" />
+
+        <EditText
+            android:id="@+id/editProfileHeight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="Boy (cm)"
+            android:inputType="number"
+            android:layout_marginBottom="15dp" />
+
+        <EditText
+            android:id="@+id/editWakeUpTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="Uyanma Saati (Örn: 08:00)"
+            android:focusable="false"
+            android:clickable="true"
+            android:inputType="none"
+            android:layout_marginBottom="15dp"
+            android:drawableEnd="@android:drawable/ic_menu_recent_history" />
+
+        <EditText
+            android:id="@+id/editBedTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="Uyku Saati (Örn: 23:00)"
+            android:focusable="false"
+            android:clickable="true"
+            android:inputType="none"
+            android:layout_marginBottom="15dp"
+            android:drawableEnd="@android:drawable/ic_menu_recent_history" />
+
+        <RadioGroup
+            android:id="@+id/radioProfileGender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="25dp">
+
+            <RadioButton
+                android:id="@+id/radioProfileMale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="Erkek" />
+
+            <RadioButton
+                android:id="@+id/radioProfileFemale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="Kadın"
+                android:layout_marginStart="20dp" />
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/btnSaveProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Kaydet" />
+
+    </LinearLayout>
+</ScrollView>
