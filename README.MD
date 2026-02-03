@@ -19,8 +19,8 @@ Android tabanlı kişisel sağlık  takip uygulaması.
 ## 📸 Ekran Görüntüleri
 
 <p align="center">
-  <img src="screenshots/AnaEkran.png" width="18%" alt="Ana Ekran">
   <img src="screenshots/KayıtEkran.png" width="18%" alt="Kayıt Ekranı">
+  <img src="screenshots/AnaEkran.png" width="18%" alt="Ana Ekran">
   <img src="screenshots/SuTakibiEkran.png" width="18%" alt="Su Takibi">
   <img src="screenshots/vkiekran.png" width="18%" alt="VKI Ekranı">
   <img src="screenshots/sleepCycleEkran.png" width="18%" alt="Uyku Döngüsü">
