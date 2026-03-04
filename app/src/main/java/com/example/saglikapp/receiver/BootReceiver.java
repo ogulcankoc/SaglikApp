@@ -1,4 +1,4 @@
-package com.example.saglikapp;
+package com.example.saglikapp.receiver;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;

@@ -1,4 +1,4 @@
-package com.example.saglikapp;
+package com.example.saglikapp.ui;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -6,15 +6,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider; // ViewModel'i bağlamak için gerekli
+
+import com.example.saglikapp.R;
 
 import java.util.Locale;
 
 public class BmiActivity extends AppCompatActivity {
 
+    // ViewModel'imizi tanımlıyoruz
+    private BmiViewModel viewModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bmi);
+
+        // 1. ViewModel'i Activity'ye bağlıyoruz
+        viewModel = new ViewModelProvider(this).get(BmiViewModel.class);
 
         SharedPreferences prefs = getSharedPreferences("UserData", MODE_PRIVATE);
 
@@ -39,28 +48,24 @@ public class BmiActivity extends AppCompatActivity {
             return;
         }
 
-        double hM = heightCm / 100.0;
-        double bmi = weightKg / (hM * hM);
-        double idealMin = 18.5 * hM * hM;
-        double idealMax = 24.9 * hM * hM;
-
-        String category;
-        if (bmi < 18.5)       category = "Zayıf";
-        else if (bmi < 25.0)  category = "Normal";
-        else if (bmi < 30.0)  category = "Fazla kilolu";
-        else                  category = "Obez";
+        // 2. HESAPLAMA İŞİNİ VİEWMODEL'E DEVREDİYORUZ (Business Logic Activity'den çıktı!)
+        viewModel.calculateBmi(heightCm, weightKg);
 
         TextView tvSummary  = findViewById(R.id.tvSummary);
         TextView tvBmi      = findViewById(R.id.tvBmi);
         TextView tvIdeal    = findViewById(R.id.tvIdeal);
         TextView tvCategory = findViewById(R.id.tvCategory);
 
+        // 3. Sonuçları ViewModel'den alıp ekrana yazdırıyoruz
         tvSummary.setText(String.format(Locale.getDefault(),
                 "%s (%s)\nBoy: %.0f cm   |   Kilo: %.1f kg",
                 name, gender, heightCm, weightKg));
-        tvBmi.setText(String.format(Locale.getDefault(), "VKİ: %.1f", bmi));
+
+        tvBmi.setText(String.format(Locale.getDefault(), "VKİ: %.1f", viewModel.getBmi()));
+
         tvIdeal.setText(String.format(Locale.getDefault(),
-                "İdeal kilo aralığı: %.1f – %.1f kg", idealMin, idealMax));
-        tvCategory.setText("Durum: " + category);
+                "İdeal kilo aralığı: %.1f – %.1f kg", viewModel.getIdealMin(), viewModel.getIdealMax()));
+
+        tvCategory.setText("Durum: " + viewModel.getCategory());
     }
 }

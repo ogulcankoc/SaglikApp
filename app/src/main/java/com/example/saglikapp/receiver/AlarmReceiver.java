@@ -1,4 +1,4 @@
-package com.example.saglikapp;
+package com.example.saglikapp.receiver;
 
 import android.app.AlarmManager;
 import android.app.NotificationChannel;
@@ -14,9 +14,10 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
+import com.example.saglikapp.ui.WaterActivity;
+
 import java.util.Calendar;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Locale;
 
 public class AlarmReceiver extends BroadcastReceiver {

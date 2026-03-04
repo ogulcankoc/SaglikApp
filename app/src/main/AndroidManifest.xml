@@ -16,7 +16,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -26,14 +26,14 @@
         android:theme="@style/Theme.SaglikApp"
         tools:targetApi="31">
 
-        <activity android:name=".WaterActivity" />
-        <activity android:name=".ProfileActivity" android:exported="false" />
-        <activity android:name=".SleepActivity" android:exported="false" />
-        <activity android:name=".BmiActivity" android:exported="false" />
-        <activity android:name=".WelcomeActivity" android:exported="false" />
+        <activity android:name=".ui.WaterActivity" />
+        <activity android:name=".ui.ProfileActivity" android:exported="false" />
+        <activity android:name=".ui.SleepActivity" android:exported="false" />
+        <activity android:name=".ui.BmiActivity" android:exported="false" />
+        <activity android:name=".ui.WelcomeActivity" android:exported="false" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -43,12 +43,12 @@
 
         <!-- AlarmManager tetikleyince çalışacak BroadcastReceiver -->
         <receiver
-            android:name=".AlarmReceiver"
+            android:name=".receiver.AlarmReceiver"
             android:exported="false" /> <!-- ✅ false yaptım, güvenlik için -->
 
         <!-- ✅ YENİ: Telefon yeniden başladığında alarmları kuracak Receiver -->
         <receiver
-            android:name=".BootReceiver"
+            android:name=".receiver.BootReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
