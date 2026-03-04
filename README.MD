@@ -7,7 +7,6 @@ Android tabanlı kişisel sağlık  takip uygulaması.
 - 💧 **Su İçme Takibi**: Günlük su tüketimi hedefi ve hatırlatıcı
 - 🏋️ **Vücut Kitle Endeksi**: BMI hesaplama
 - 😴 **Uyku Döngüsü**: Uyku saati hatırlatıcı ve takip
--
 
 ## 🛠️ Teknolojiler
 
