@@ -96,7 +96,8 @@ public class MainActivity extends AppCompatActivity {
             viewModel.saveUserData(name, age, weight, height, gender, wakeUp, bedTime);
 
             // 5. O uzun saat hesaplama işini ViewModel yapıyor, bize sadece "Calendar" objesi veriyor
-            Calendar alarmTime = viewModel.calculateFirstAlarmTime(wakeUp, bedTime);
+            Calendar alarmTime = new MainViewModel.AlarmCalculator()
+                    .calculateFirstAlarmTime(wakeUp, bedTime);
 
             if (alarmTime != null) {
                 scheduleFirstAlarm(alarmTime); // Sadece hazır saati Android sistemine veriyoruz

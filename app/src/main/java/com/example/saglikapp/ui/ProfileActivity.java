@@ -93,7 +93,8 @@ public class ProfileActivity extends AppCompatActivity {
             viewModel.saveProfileData(newName, newAge, newWeight, newHeight, newGender, newWakeUp, newBedTime);
 
             // 6. O uzun saat hesaplama işini ViewModel yapıyor, bize sadece "Calendar" objesi veriyor
-            Calendar alarmTime = viewModel.calculateFirstAlarmTime(newWakeUp, newBedTime);
+            Calendar alarmTime = new ProfileViewModel.AlarmCalculator()
+                    .calculateFirstAlarmTime(newWakeUp, newBedTime);
 
             if (alarmTime != null) {
                 scheduleFirstAlarm(alarmTime); // Hazır saati sisteme veriyoruz
