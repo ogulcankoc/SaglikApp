@@ -8,15 +8,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider; // ViewModel bağlamak için eklendi
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.saglikapp.R;
 
 public class WaterActivity extends AppCompatActivity {
 
-    // 1. ViewModel'imizi tanımlıyoruz
     private WaterViewModel viewModel;
-
     private ProgressBar progressBar;
     private TextView txtProgress;
     private EditText editWaterGoal;
@@ -26,7 +24,6 @@ public class WaterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_water);
 
-        // 2. ViewModel'i Activity'ye bağlıyoruz
         viewModel = new ViewModelProvider(this).get(WaterViewModel.class);
 
         progressBar = findViewById(R.id.progressBarWater);
@@ -38,20 +35,22 @@ public class WaterActivity extends AppCompatActivity {
         Button btnAdd500 = findViewById(R.id.btnAdd500);
         Button btnReset = findViewById(R.id.btnResetWater);
 
-        // Uygulama açıldığında ekrandaki hedef kutusuna ViewModel'deki hedefi yazdırıyoruz
+        // Başlangıç değerini set et
         editWaterGoal.setText(String.valueOf(viewModel.getDailyGoal()));
 
-        // Arayüzü ilk açılışta güncelliyoruz
-        updateUI();
-
-        // 3. Buton tıklamalarını dinleyip işi ViewModel'e devrediyoruz
         btnUpdateGoal.setOnClickListener(v -> {
-            String newGoalStr = editWaterGoal.getText().toString();
+            String newGoalStr = editWaterGoal.getText().toString().trim();
             if (!newGoalStr.isEmpty()) {
-                int newGoal = Integer.parseInt(newGoalStr);
-                viewModel.updateGoal(newGoal); // Veriyi ViewModel günceller
-                updateUI(); // Arayüzü biz güncelleriz
-                Toast.makeText(this, "Hedef Güncellendi!", Toast.LENGTH_SHORT).show();
+                try {
+                    int newGoal = Integer.parseInt(newGoalStr);
+                    if (newGoal > 0) {
+                        viewModel.updateGoal(newGoal);
+                        updateUI();
+                        Toast.makeText(this, "Hedef Güncellendi!", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (NumberFormatException e) {
+                    Toast.makeText(this, "Lütfen geçerli bir sayı girin.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -71,14 +70,29 @@ public class WaterActivity extends AppCompatActivity {
         });
     }
 
-    // 4. Arayüzü güncelleyen temizlenmiş metodumuz
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Uygulama arka plandan öne geldiğinde (veya gün değiştiğinde) UI'ı tazele
+        updateUI();
+    }
+
     private void updateUI() {
-        // Verileri sadece ViewModel'den çekiyoruz, Activity'de değişken tutmuyoruz
         int current = viewModel.getCurrentWater();
         int goal = viewModel.getDailyGoal();
 
+        // ProgressBar'ın max değerini güncelle
         progressBar.setMax(goal);
         progressBar.setProgress(current);
-        txtProgress.setText(current + " / " + goal + " ml");
+
+        // UYARIYI DÜZELTEN KISIM:
+        // getString(R.string.id, arg1, arg2) formatı en sağlıklı yöntemdir.
+        String progressText = getString(R.string.water_progress_format, current, goal);
+        txtProgress.setText(progressText);
+
+        // Hedefe ulaşıldıysa görsel geri bildirim
+        if (current >= goal && goal > 0) {
+            txtProgress.append(getString(R.string.goal_reached_msg));
+        }
     }
 }

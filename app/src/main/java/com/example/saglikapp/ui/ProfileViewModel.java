@@ -61,29 +61,31 @@ public class ProfileViewModel extends AndroidViewModel {
                 String[] w = wakeUpTimeStr.split(":");
                 String[] b = bedTimeStr.split(":");
 
-                Calendar now    = Calendar.getInstance();
-                Calendar wakeAt = Calendar.getInstance();
-                Calendar bedAt  = Calendar.getInstance();
+                Calendar now = Calendar.getInstance();
+                // Saniye ve milisaniyeyi sıfırlayarak net karşılaştırma sağlıyoruz
+                now.set(Calendar.SECOND, 0);
+                now.set(Calendar.MILLISECOND, 0);
 
+                Calendar wakeAt = (Calendar) now.clone();
                 wakeAt.set(Calendar.HOUR_OF_DAY, Integer.parseInt(w[0].trim()));
                 wakeAt.set(Calendar.MINUTE,      Integer.parseInt(w[1].trim()));
-                wakeAt.set(Calendar.SECOND,      0);
-                wakeAt.set(Calendar.MILLISECOND, 0);
 
+                Calendar bedAt = (Calendar) now.clone();
                 bedAt.set(Calendar.HOUR_OF_DAY, Integer.parseInt(b[0].trim()));
                 bedAt.set(Calendar.MINUTE,      Integer.parseInt(b[1].trim()));
-                bedAt.set(Calendar.SECOND,      0);
-                bedAt.set(Calendar.MILLISECOND, 0);
 
-                // Gece kuşu: yatış uyanıştan önceyse ertesi güne taşı
-                if (!bedAt.after(wakeAt)) bedAt.add(Calendar.DAY_OF_YEAR, 1);
+                // Gece kuşu ayarı: Yatış uyanıştan önceyse (örn: 08:00 uyanış, 02:00 yatış)
+                if (!bedAt.after(wakeAt)) {
+                    bedAt.add(Calendar.DAY_OF_YEAR, 1);
+                }
 
-                // Dünkü döngü hâlâ aktif mi? (ör: şu an 01:00, yatış 02:00)
+                // Döngü kontrolü: Şu an dünkü aktif periyodun içinde miyiz?
                 Calendar wPrev = (Calendar) wakeAt.clone(); wPrev.add(Calendar.DAY_OF_YEAR, -1);
                 Calendar bPrev = (Calendar) bedAt.clone();  bPrev.add(Calendar.DAY_OF_YEAR, -1);
-                if (!now.before(wPrev) && now.before(bPrev)) {
+
+                if (now.after(wPrev) && now.before(bPrev)) {
                     wakeAt = wPrev;
-                    bedAt  = bPrev;
+                    bedAt = bPrev;
                 }
 
                 Calendar firstAlarm = (Calendar) wakeAt.clone();
@@ -92,20 +94,34 @@ public class ProfileViewModel extends AndroidViewModel {
                 Calendar lastAlarm = (Calendar) bedAt.clone();
                 lastAlarm.add(Calendar.MINUTE, -ALARM_BOUNDARY_MINUTES);
 
-                if (now.before(firstAlarm)) return firstAlarm;
-
-                if (!now.before(lastAlarm)) {
-                    firstAlarm.add(Calendar.DAY_OF_YEAR, 1);
+                // DURUM 1: Henüz uyanma vaktine gelmedik (Sabah ilk alarmı kur)
+                if (now.before(firstAlarm)) {
                     return firstAlarm;
                 }
 
-                // 2 saatlik periyot
-                long passed = (now.getTimeInMillis() - firstAlarm.getTimeInMillis())
-                        / ((long) ALARM_INTERVAL_HOURS * 60 * 60 * 1000);
-                Calendar next = (Calendar) firstAlarm.clone();
-                next.add(Calendar.HOUR_OF_DAY, (int)((passed + 1) * ALARM_INTERVAL_HOURS));
+                // DURUM 2: Yatış vaktine çok yaklaştık veya geçtik (Yarın sabahı kur)
+                Calendar safetyNow = (Calendar) now.clone();
+                safetyNow.add(Calendar.MINUTE, 1); // 1 dakikalık güvenlik payı
 
-                return next.before(lastAlarm) ? next : lastAlarm;
+                if (safetyNow.after(lastAlarm)) {
+                    Calendar tomorrowFirst = (Calendar) wakeAt.clone();
+                    tomorrowFirst.add(Calendar.DAY_OF_YEAR, 1);
+                    tomorrowFirst.add(Calendar.MINUTE, ALARM_BOUNDARY_MINUTES);
+                    return tomorrowFirst;
+                }
+
+                // DURUM 3: Gün içindeyiz, bir sonraki 2 saatlik dilimi bul
+                Calendar nextAlarm = (Calendar) firstAlarm.clone();
+                while (!nextAlarm.after(now)) {
+                    nextAlarm.add(Calendar.HOUR_OF_DAY, ALARM_INTERVAL_HOURS);
+                }
+
+                // Eğer hesaplanan zaman yatış sınırını aşıyorsa, günün son alarmını kur
+                if (nextAlarm.after(lastAlarm)) {
+                    return lastAlarm;
+                }
+
+                return nextAlarm;
 
             } catch (Exception e) {
                 return null;

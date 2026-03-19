@@ -2,17 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Alarm kurmak için gerekli izin -->
+    <!-- Alarm kurmak için gerekli izinler -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
+    <!-- Android 12+ (API 31+) için tam zamanlı alarm izni -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" /> <!-- ✅ EKLEME -->
+
+    <!-- ⚠️ USE_EXACT_ALARM kaldırıldı (Google Play reddini önlemek için) -->
+
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Android 13 (API 33+) için bildirim izni -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Pil tasarrufu modunda alarmların çalışması için -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-    <!-- ✅ YENİ: Telefon yeniden başladığında alarmları kurabilmek için -->
+    <!-- Telefon yeniden başladığında alarmları kurabilmek için -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
@@ -44,16 +50,20 @@
         <!-- AlarmManager tetikleyince çalışacak BroadcastReceiver -->
         <receiver
             android:name=".receiver.AlarmReceiver"
-            android:exported="false" /> <!-- ✅ false yaptım, güvenlik için -->
+            android:enabled="true"
+            android:exported="false" />
 
-        <!-- ✅ YENİ: Telefon yeniden başladığında alarmları kuracak Receiver -->
+        <!-- Telefon yeniden başladığında alarmları kuracak Receiver -->
         <receiver
             android:name=".receiver.BootReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <!-- Bazı HTC cihazlar için -->
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
 

@@ -10,15 +10,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
 import com.example.saglikapp.ui.WaterActivity;
 
 import java.util.Calendar;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
 
 public class AlarmReceiver extends BroadcastReceiver {
 
@@ -26,28 +23,41 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-
-        Toast.makeText(context, "Alarm Tetiklendi!", Toast.LENGTH_LONG).show();
-        // Gelen alarmın türüne bakıyoruz
         String alarmType = intent.getStringExtra("type");
 
         if ("water".equals(alarmType)) {
-            // --- SENARYO A: SU HATIRLATMA ---
-            // 1. Bildirimi Göster
+            // --- GÜVENLİK KONTROLÜ ---
+            // Eğer sistem alarmı geciktirdiyse ve şu an uyku vaktindeysek bildirim gösterme
+            if (isCurrentTimeInSleepRange(context)) {
+                Log.d("AlarmReceiver", "Uyku saatindeyiz, bildirim iptal edildi. Bir sonraki sabah için planlanıyor.");
+                scheduleNextAlarm(context);
+                return;
+            }
+
             showWaterNotification(context);
-            // 2. Bir Sonraki Alarmı Hesapla (Akıllı Döngü)
             scheduleNextAlarm(context);
         } else {
-            // --- SENARYO B: UYKU ALARMI (ESKİ SİSTEM) ---
-            // Burası senin orijinal kodun gibi çalışır, uyku döngüsünü bozmaz.
             String message = intent.getStringExtra("message");
             if (message == null) message = "Uyanma Vakti!";
-
             showSleepNotification(context, message);
         }
     }
 
-    // --- SU BİLDİRİMİ ---
+    private boolean isCurrentTimeInSleepRange(Context context) {
+        SharedPreferences sharedPref = context.getSharedPreferences("UserData", Context.MODE_PRIVATE);
+        String wakeUpStr = sharedPref.getString("wakeUpTime", "08:00");
+        String bedTimeStr = sharedPref.getString("bedTime", "23:00");
+
+        Calendar now = Calendar.getInstance();
+        Calendar wakeUp = getCalendarFromTime(wakeUpStr);
+        Calendar bedTime = getCalendarFromTime(bedTimeStr);
+
+        if (bedTime.before(wakeUp)) bedTime.add(Calendar.DAY_OF_YEAR, 1);
+
+        // Eğer şu an uyanma vaktinden önceyse VEYA yatma vaktinden sonraysa uykudayızdır.
+        return now.before(wakeUp) || now.after(bedTime);
+    }
+
     private void showWaterNotification(Context context) {
         Intent tapIntent = new Intent(context, WaterActivity.class);
         tapIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -70,12 +80,8 @@ public class AlarmReceiver extends BroadcastReceiver {
         notify(context, 1001, builder);
     }
 
-    // --- UYKU BİLDİRİMİ (ESKİSİNİ KORUYORUZ) ---
     private void showSleepNotification(Context context, String message) {
-        Toast.makeText(context, "Alarm: " + message, Toast.LENGTH_LONG).show();
-
         createNotificationChannel(context);
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                 .setContentTitle("Uyku Alarmı 🌙")
@@ -86,74 +92,72 @@ public class AlarmReceiver extends BroadcastReceiver {
         notify(context, 1002, builder);
     }
 
-    // --- AKILLI HESAPLAMA (Sadece Su İçin) ---
     private void scheduleNextAlarm(Context context) {
         SharedPreferences sharedPref = context.getSharedPreferences("UserData", Context.MODE_PRIVATE);
         String wakeUpStr = sharedPref.getString("wakeUpTime", "08:00");
         String bedTimeStr = sharedPref.getString("bedTime", "23:00");
 
         Calendar now = Calendar.getInstance();
-
-        // ✅ Bugünün uyanma ve yatma saatlerini doğru hesapla
         Calendar wakeUpTime = getCalendarFromTime(wakeUpStr);
         Calendar bedTime = getCalendarFromTime(bedTimeStr);
 
-        // ✅ Eğer yatma saati uyanmadan önce ise (örn: Yatış 23:00, Uyanış 07:00)
-        // Yatma saatini yarına taşı
+        // Gece kuşu ayarı
         if (bedTime.before(wakeUpTime)) {
             bedTime.add(Calendar.DAY_OF_YEAR, 1);
         }
 
-        // ✅ Eğer şu an yatma saatinden sonraysa (örn: saat 01:00 ise)
-        // Uyanma ve yatma saatlerini yarına taşı
-        if (now.after(bedTime)) {
+        // Eğer şu an dünkü döngünün içindeysek (gece 01:00 ama yatış 02:00 gibi)
+        Calendar yesterdayWake = (Calendar) wakeUpTime.clone(); yesterdayWake.add(Calendar.DAY_OF_YEAR, -1);
+        Calendar yesterdayBed = (Calendar) bedTime.clone(); yesterdayBed.add(Calendar.DAY_OF_YEAR, -1);
+
+        if (now.after(yesterdayWake) && now.before(yesterdayBed)) {
+            wakeUpTime = yesterdayWake;
+            bedTime = yesterdayBed;
+        } else if (now.after(bedTime)) {
+            // Normal gün aşımı
             wakeUpTime.add(Calendar.DAY_OF_YEAR, 1);
             bedTime.add(Calendar.DAY_OF_YEAR, 1);
         }
 
-        // Son Çağrı: Yatmadan 15 dakika önce
         Calendar lastCallTime = (Calendar) bedTime.clone();
         lastCallTime.add(Calendar.MINUTE, -15);
 
         Calendar nextAlarmTime;
 
-        // SENARYO 1: Gün bitti mi? (Yatmadan önceki son 15 dk içindeysek veya geçtiysek)
-        if (now.after(lastCallTime) || now.equals(lastCallTime)) {
-            // ✅ Yarının uyanma saati + 5dk
+        if (!now.before(lastCallTime)) {
+            // Gün bitti, yarın sabah uyanış + 5dk
             nextAlarmTime = (Calendar) wakeUpTime.clone();
-            if (!wakeUpTime.after(now)) {
+            if (!nextAlarmTime.after(now)) {
                 nextAlarmTime.add(Calendar.DAY_OF_YEAR, 1);
             }
             nextAlarmTime.add(Calendar.MINUTE, 5);
-
-            Log.d("AlarmReceiver", "Gün bitti, yarın sabah alarm kuruldu");
         } else {
-            // SENARYO 2: Gün içindeyiz
+            // Gün içindeyiz
             Calendar potentialNextTime = (Calendar) now.clone();
-            potentialNextTime.add(Calendar.HOUR_OF_DAY, 2); // +2 Saat
+            potentialNextTime.add(Calendar.HOUR_OF_DAY, 2);
 
-            // Eğer +2 saat yatma vaktini geçiyorsa, son çağrıya (Yatış-15dk) kur
             if (potentialNextTime.after(lastCallTime)) {
                 nextAlarmTime = lastCallTime;
-                Log.d("AlarmReceiver", "Son alarm kuruldu (yatış-15dk)");
             } else {
                 nextAlarmTime = potentialNextTime;
-                Log.d("AlarmReceiver", "Normal 2 saatlik alarm kuruldu");
             }
         }
-
-        // ✅ Debug log ekle
-        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM HH:mm", new Locale("tr"));
-        Log.i("AlarmReceiver", "Sonraki alarm: " + sdf.format(nextAlarmTime.getTime()));
 
         setAlarm(context, nextAlarmTime.getTimeInMillis());
     }
 
-    // --- GÜVENLİ ALARM KURMA (HATA DÜZELTİLDİ) ---
     private void setAlarm(Context context, long timeInMillis) {
+        // --- GEÇMİŞ ZAMAN KORUMASI ---
+        // Eğer hesaplanan zaman şu andan küçükse (veya çok yakınsa),
+        // Android alarmı hemen tetikler. Bunu engellemek için en az 10 saniye sonraya kuruyoruz.
+        long currentTime = System.currentTimeMillis();
+        if (timeInMillis <= currentTime) {
+            timeInMillis = currentTime + 10000;
+        }
+
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, AlarmReceiver.class);
-        intent.putExtra("type", "water"); // Alarmın türünü SU olarak işaretliyoruz
+        intent.putExtra("type", "water");
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context, 100, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
@@ -161,25 +165,18 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         if (alarmManager != null) {
             try {
-                // Android 12 (API 31) ve üzeri için "Tam Zamanlı Alarm" izni kontrolü
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     if (alarmManager.canScheduleExactAlarms()) {
                         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
                     } else {
-                        // İzin yoksa çökmemesi için hassas olmayan alarm kur
                         alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
                     }
-                }
-                // Android 6 (API 23) ile Android 11 arası
-                else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
-                }
-                // Daha eski sürümler
-                else {
+                } else {
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
                 }
             } catch (SecurityException e) {
-                // Olası bir güvenlik hatasında uygulama çökmesin diye standart kurulum
                 alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
             }
         }
@@ -189,13 +186,13 @@ public class AlarmReceiver extends BroadcastReceiver {
         Calendar cal = Calendar.getInstance();
         try {
             String[] parts = timeStr.split(":");
-            int hour = Integer.parseInt(parts[0]);
-            int minute = Integer.parseInt(parts[1]);
-            cal.set(Calendar.HOUR_OF_DAY, hour);
-            cal.set(Calendar.MINUTE, minute);
+            cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(parts[0].trim()));
+            cal.set(Calendar.MINUTE, Integer.parseInt(parts[1].trim()));
             cal.set(Calendar.SECOND, 0);
             cal.set(Calendar.MILLISECOND, 0);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            Log.e("AlarmReceiver", "Zaman formatı hatası: " + timeStr);
+        }
         return cal;
     }
 

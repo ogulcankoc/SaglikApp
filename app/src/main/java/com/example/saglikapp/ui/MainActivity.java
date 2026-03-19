@@ -23,7 +23,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.ViewModelProvider; // ViewModel eklentisi
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.saglikapp.R;
 import com.example.saglikapp.receiver.AlarmReceiver;
@@ -34,7 +34,7 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-    private MainViewModel viewModel; // ViewModel tanımlandı
+    private MainViewModel viewModel;
     private static final int NOTIFICATION_PERMISSION_CODE = 100;
     private static final int ALARM_REQUEST_CODE = 100;
     private static final String TAG = "MainActivity";
@@ -43,10 +43,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 1. ViewModel'i bağlıyoruz
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
-        // 2. Kullanıcı daha önce kayıtlıysa direkt Welcome ekranına geç (Logic ViewModel'den geliyor)
         if (viewModel.isUserRegistered()) {
             startActivity(new Intent(this, WelcomeActivity.class));
             finish();
@@ -55,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        // BİLDİRİM İZNİ VE PİL TASARRUFU KONTROLLERİ (Sistem işlemi olduğu için Activity'de kalır)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_CODE);
@@ -86,21 +83,19 @@ public class MainActivity extends AppCompatActivity {
             int selectedGenderId = radioGender.getCheckedRadioButtonId();
             String gender = selectedGenderId != -1 ? ((RadioButton) findViewById(selectedGenderId)).getText().toString() : "";
 
-            // 3. Veri doğrulama işi ViewModel'de
             if (!viewModel.validateInputs(name, age, weight, height, gender, wakeUp, bedTime)) {
                 Toast.makeText(this, "Lütfen tüm alanları doldurun.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // 4. Veri kaydetme işi ViewModel'de
             viewModel.saveUserData(name, age, weight, height, gender, wakeUp, bedTime);
 
-            // 5. O uzun saat hesaplama işini ViewModel yapıyor, bize sadece "Calendar" objesi veriyor
+            // ViewModel üzerinden güvenli zaman hesaplaması
             Calendar alarmTime = new MainViewModel.AlarmCalculator()
                     .calculateFirstAlarmTime(wakeUp, bedTime);
 
             if (alarmTime != null) {
-                scheduleFirstAlarm(alarmTime); // Sadece hazır saati Android sistemine veriyoruz
+                scheduleFirstAlarm(alarmTime);
                 Toast.makeText(this, "Hoşgeldiniz! Su hatırlatıcısı kuruldu.", Toast.LENGTH_SHORT).show();
 
                 startActivity(new Intent(this, WelcomeActivity.class));
@@ -121,9 +116,14 @@ public class MainActivity extends AppCompatActivity {
                         .setTitle("Pil Kısıtlaması")
                         .setMessage("Bildirimlerin zamanında gelmesi için pil kısıtlamasını 'Kısıtlama Yok' olarak seçmelisiniz.")
                         .setPositiveButton("Ayarları Aç", (dialog, which) -> {
-                            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                            intent.setData(Uri.parse("package:" + packageName));
-                            startActivity(intent);
+                            try {
+                                Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                                intent.setData(Uri.parse("package:" + packageName));
+                                startActivity(intent);
+                            } catch (Exception e) {
+                                Intent intent = new Intent(Settings.ACTION_SETTINGS);
+                                startActivity(intent);
+                            }
                         })
                         .setNegativeButton("İptal", null)
                         .show();
@@ -131,15 +131,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // --- TEMİZLENMİŞ ALARM KURMA FONKSİYONU ---
-    // Artık sadece hazır hesaplanmış "Calendar" objesi alıp sistemi kuruyor.
     private void scheduleFirstAlarm(Calendar alarmTime) {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) {
-            Log.e(TAG, "AlarmManager alınamadı");
-            Toast.makeText(this, "Alarm sistemi kullanılamıyor", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (alarmManager == null) return;
 
         Intent intent = new Intent(this, AlarmReceiver.class);
         intent.putExtra("type", "water");
@@ -151,24 +145,36 @@ public class MainActivity extends AppCompatActivity {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        // Önceki olası alarmları temizle
         alarmManager.cancel(pendingIntent);
+
         long alarmTimeMillis = alarmTime.getTimeInMillis();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
-            } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
-            }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
-        } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+        // Geçmiş zaman koruması: Eğer hesaplanan zaman şu andan küçükse 10 saniye sonraya kur
+        if (alarmTimeMillis <= System.currentTimeMillis()) {
+            alarmTimeMillis = System.currentTimeMillis() + 10000;
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM EEEE HH:mm", new Locale("tr"));
-        String formattedTime = sdf.format(alarmTime.getTime());
-        Log.i(TAG, "✅ Alarm başarıyla kuruldu: " + formattedTime);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+            }
+        } catch (SecurityException e) {
+            // Android 14+ için tam zamanlı alarm izni yoksa normal alarm kur
+            Log.e(TAG, "Exact alarm izni yok, normal alarm kuruluyor.");
+            alarmManager.set(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM HH:mm", new Locale("tr"));
+        Log.i(TAG, "✅ İlk Alarm Planlandı: " + sdf.format(alarmTime.getTime()));
     }
 
     private void showTimePicker(EditText targetEditText) {
@@ -178,7 +184,8 @@ public class MainActivity extends AppCompatActivity {
 
         TimePickerDialog timePickerDialog = new TimePickerDialog(this,
                 (view, selectedHour, selectedMinute) -> {
-                    String formattedTime = String.format(Locale.getDefault(), "%02d:%02d", selectedHour, selectedMinute);
+                    // Locale.US kullanarak rakamların her dilde 0-9 formatında (ASCII) olmasını sağlıyoruz
+                    String formattedTime = String.format(Locale.US, "%02d:%02d", selectedHour, selectedMinute);
                     targetEditText.setText(formattedTime);
                 }, hour, minute, true);
 

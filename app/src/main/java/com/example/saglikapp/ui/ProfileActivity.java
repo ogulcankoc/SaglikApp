@@ -15,7 +15,7 @@ import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider; // ViewModel eklentisi
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.saglikapp.R;
 import com.example.saglikapp.receiver.AlarmReceiver;
@@ -26,9 +26,7 @@ import java.util.Locale;
 
 public class ProfileActivity extends AppCompatActivity {
 
-    // 1. ViewModel'imizi tanımlıyoruz
     private ProfileViewModel viewModel;
-
     private EditText editName, editAge, editWeight, editHeight, editWakeUpTime, editBedTime;
     private RadioGroup radioGender;
 
@@ -40,7 +38,6 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        // 2. ViewModel'i bağlıyoruz
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
         editName = findViewById(R.id.editProfileName);
@@ -52,7 +49,7 @@ public class ProfileActivity extends AppCompatActivity {
         radioGender = findViewById(R.id.radioProfileGender);
         Button btnSave = findViewById(R.id.btnSaveProfile);
 
-        // 3. Mevcut bilgileri ViewModel üzerinden alıp ekrana yazdırıyoruz (SharedPreferences Activity'den çıktı)
+        // Mevcut verileri yükle
         editName.setText(viewModel.getUserData("name"));
         editAge.setText(viewModel.getUserData("age"));
         editWeight.setText(viewModel.getUserData("weight"));
@@ -67,11 +64,9 @@ public class ProfileActivity extends AppCompatActivity {
             ((RadioButton) findViewById(R.id.radioProfileFemale)).setChecked(true);
         }
 
-        // --- SAAT SEÇİCİLER ---
         editWakeUpTime.setOnClickListener(v -> showTimePicker(editWakeUpTime));
         editBedTime.setOnClickListener(v -> showTimePicker(editBedTime));
 
-        // --- KAYDET BUTONU ---
         btnSave.setOnClickListener(v -> {
             String newName = editName.getText().toString().trim();
             String newAge = editAge.getText().toString().trim();
@@ -83,21 +78,20 @@ public class ProfileActivity extends AppCompatActivity {
             int selectedGenderId = radioGender.getCheckedRadioButtonId();
             String newGender = selectedGenderId != -1 ? ((RadioButton) findViewById(selectedGenderId)).getText().toString() : "";
 
-            // 4. Doğrulama işi ViewModel'de
             if (!viewModel.validateInputs(newName, newAge, newWeight, newHeight, newGender, newWakeUp, newBedTime)) {
                 Toast.makeText(this, "Lütfen tüm alanları doldurun.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // 5. Verileri kaydetme ve su hedefini sıfırlama işi ViewModel'de
+            // Verileri kaydet
             viewModel.saveProfileData(newName, newAge, newWeight, newHeight, newGender, newWakeUp, newBedTime);
 
-            // 6. O uzun saat hesaplama işini ViewModel yapıyor, bize sadece "Calendar" objesi veriyor
+            // Yeni alarm zamanını hesapla
             Calendar alarmTime = new ProfileViewModel.AlarmCalculator()
                     .calculateFirstAlarmTime(newWakeUp, newBedTime);
 
             if (alarmTime != null) {
-                scheduleFirstAlarm(alarmTime); // Hazır saati sisteme veriyoruz
+                scheduleFirstAlarm(alarmTime);
 
                 Intent intent = new Intent(ProfileActivity.this, WelcomeActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -109,14 +103,9 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
-    // --- TEMİZLENMİŞ ALARM KURMA FONKSİYONU ---
     private void scheduleFirstAlarm(Calendar alarmTime) {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) {
-            Log.e(TAG, "AlarmManager alınamadı");
-            Toast.makeText(this, "Alarm sistemi kullanılamıyor", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (alarmManager == null) return;
 
         Intent intent = new Intent(this, AlarmReceiver.class);
         intent.putExtra("type", "water");
@@ -128,35 +117,47 @@ public class ProfileActivity extends AppCompatActivity {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        // Eski alarmları temizle
         alarmManager.cancel(pendingIntent);
+
         long alarmTimeMillis = alarmTime.getTimeInMillis();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
-            } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
-            }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
-        } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+        // GEÇMİŞ ZAMAN KORUMASI: Eğer hesaplanan zaman şu andan küçükse 10 saniye sonraya kur
+        if (alarmTimeMillis <= System.currentTimeMillis()) {
+            alarmTimeMillis = System.currentTimeMillis() + 10000;
         }
 
-        // 7. Kullanıcıya verilecek mesajın tarihi
-        Calendar now = Calendar.getInstance();
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+            }
+        } catch (SecurityException e) {
+            Log.e(TAG, "Exact alarm izni yok, normal alarm kuruluyor.");
+            alarmManager.set(AlarmManager.RTC_WAKEUP, alarmTimeMillis, pendingIntent);
+        }
+
+        // Kullanıcıya bilgi mesajı
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", new Locale("tr"));
         String time = timeFormat.format(alarmTime.getTime());
 
+        Calendar now = Calendar.getInstance();
         boolean isToday = now.get(Calendar.DAY_OF_YEAR) == alarmTime.get(Calendar.DAY_OF_YEAR);
         String message;
 
         if (isToday) {
-            message = "Bilgiler güncellendi. Su hatırlatıcısı bugün saat " + time + "'de başlayacak";
+            message = "Bilgiler güncellendi. Su hatırlatıcısı bugün saat " + time + "'de başlayacak.";
         } else {
             SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM", new Locale("tr"));
             String date = dateFormat.format(alarmTime.getTime());
-            message = "Bilgiler güncellendi. Su hatırlatıcısı " + date + " saat " + time + "'de başlayacak";
+            message = "Bilgiler güncellendi. Su hatırlatıcısı " + date + " saat " + time + "'de başlayacak.";
         }
 
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
@@ -170,7 +171,8 @@ public class ProfileActivity extends AppCompatActivity {
 
         TimePickerDialog timePickerDialog = new TimePickerDialog(this,
                 (view, selectedHour, selectedMinute) -> {
-                    String formattedTime = String.format(Locale.getDefault(), "%02d:%02d", selectedHour, selectedMinute);
+                    // Locale.US kullanarak rakamların her dilde 0-9 formatında olmasını sağlıyoruz
+                    String formattedTime = String.format(Locale.US, "%02d:%02d", selectedHour, selectedMinute);
                     targetEditText.setText(formattedTime);
                 }, hour, minute, true);
 
