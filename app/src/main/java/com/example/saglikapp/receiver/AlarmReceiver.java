@@ -59,6 +59,10 @@ public class AlarmReceiver extends BroadcastReceiver {
     }
 
     private void showWaterNotification(Context context) {
+        // --- İSMİ ÇEKME KISMI ---
+        SharedPreferences sharedPref = context.getSharedPreferences("UserData", Context.MODE_PRIVATE);
+        String userName = sharedPref.getString("name", "Dostum"); // Eğer isim yoksa "Dostum" yazar
+
         Intent tapIntent = new Intent(context, WaterActivity.class);
         tapIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
@@ -71,8 +75,8 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_menu_agenda)
-                .setContentTitle("Su İçme Zamanı! 💧")
-                .setContentText("Bir bardak su içip hedefine yaklaş.")
+                .setContentTitle("Su Vakti, " + userName + "! 💧") // İsmi başlığa ekledik
+                .setContentText("Hedefine ulaşmak için bir bardak su içmeyi unutma.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
