@@ -4,9 +4,9 @@ Android tabanlı kişisel sağlık  takip uygulaması.
 
 ## 📱 Özellikler
 
-- 💧 **Su İçme Takibi**: Günlük su tüketimi hedefi ve hatırlatıcı
-- 🏋️ **Vücut Kitle Endeksi**: BMI hesaplama
-- 😴 **Uyku Döngüsü**: Uyku saati hatırlatıcı ve takip
+- 💧 **Su İçme Takibi**: Grafiksel olarak günlük su tüketimi takibi ve günlük olarak su içme hatırlatıcıları
+- 🏋️ **Vücut Kitle Endeksi**: Kullanıcıdan alınan bilgilere göre BMI hesaplama ve bilgilendirme
+- 😴 **Uyku Döngüsü**: Uyku saatine göre uyku döngülerine uygun uyanma saatlerinin belirlenmesi
 
 ## 🛠️ Teknolojiler
 
@@ -14,6 +14,7 @@ Android tabanlı kişisel sağlık  takip uygulaması.
 - Android SDK
 - SharedPreferences (veri saklama)
 - Material Design
+- Room Database Entegrasyonu veri kaydetme ve Grafiksel Görselleştirme
 
 ## 📸 Ekran Görüntüleri
 
@@ -28,16 +29,16 @@ Android tabanlı kişisel sağlık  takip uygulaması.
 
 ## 📝 Yapılacaklar
 
-- [ ] Room Database entegrasyonu
-- [ ] Grafikler ekleme
-- [ ] Bildirim sistemi
+- [✅] Room Database entegrasyonu
+- [✅] Grafikler ekleme
+- [✅] Hatırlatma Bildirim sistemi
 - [ ] **Kalp Ritmi**: Nabız ölçümü
 
-## 👨‍💻 Geliştirici
+## Geliştirici
 
 **Oğulcan KOÇ**  
-[GitHub](https://github.com/ogulcankoc) | [LinkedIn](https://www.linkedin.com/in/ogulcan-koc/)
+[LinkedIn](https://www.linkedin.com/in/ogulcan-koc/)
 
 ## 📄 Lisans
 
-Bu proje eğitim amaçlıdır.
+Bu proje eğitim amaçlı olarak geliştirilmektedir.
