@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.saglikapp.R;
 import com.example.saglikapp.data.WaterDatabase;
 import com.example.saglikapp.data.WaterLog;
+import com.example.saglikapp.receiver.AlarmReceiver;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.BarData;
@@ -78,6 +79,7 @@ public class WaterActivity extends AppCompatActivity {
                     if (newGoal > 0) {
                         viewModel.updateGoal(newGoal);
                         updateUI();
+                        loadSummaryData(); // Hedef güncellendiğinde grafiği de yenile
                         Toast.makeText(this, "Hedef Güncellendi!", Toast.LENGTH_SHORT).show();
                     }
                 } catch (NumberFormatException e) {
@@ -90,12 +92,14 @@ public class WaterActivity extends AppCompatActivity {
             viewModel.addWater(200);
             updateUI();
             loadSummaryData(); // Su ekleyince grafiği tazele
+            rescheduleAlarm(); // YENİ: Kullanıcı su içti, bildirim döngüsünü sıfırla
         });
 
         btnAdd500.setOnClickListener(v -> {
             viewModel.addWater(500);
             updateUI();
             loadSummaryData(); // Su ekleyince grafiği tazele
+            rescheduleAlarm(); // YENİ: Kullanıcı su içti, bildirim döngüsünü sıfırla
         });
 
         btnReset.setOnClickListener(v -> {
@@ -149,8 +153,13 @@ public class WaterActivity extends AppCompatActivity {
             SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             SimpleDateFormat outputFormat = new SimpleDateFormat("EEE", new Locale("tr"));
 
+            float maxAmount = 0f;
             for (int i = 0; i < logs.size(); i++) {
-                entries.add(new BarEntry(i, logs.get(i).getTotalAmount()));
+                int amount = logs.get(i).getTotalAmount();
+                entries.add(new BarEntry(i, amount));
+                if (amount > maxAmount) {
+                    maxAmount = amount;
+                }
                 try {
                     Date date = inputFormat.parse(logs.get(i).getDate());
                     dayNames.add(outputFormat.format(date));
@@ -158,8 +167,21 @@ public class WaterActivity extends AppCompatActivity {
                     dayNames.add("");
                 }
             }
+            final float finalMaxAmount = maxAmount;
 
             runOnUiThread(() -> {
+                int goal = viewModel.getDailyGoal();
+                float yMax = Math.max((float) goal, finalMaxAmount);
+                
+                // Y ekseni ayarları
+                com.github.mikephil.charting.components.YAxis leftAxis = summaryChart.getAxisLeft();
+                leftAxis.setAxisMaximum(yMax);
+                leftAxis.setGranularity(200f); // 200'er artsın
+                
+                int labelCount = (int) (yMax / 200f) + 1;
+                // Grafiğin sol tarafında çok fazla çizgi oluşmaması için Max 15 ile sınırlıyoruz
+                leftAxis.setLabelCount(Math.min(labelCount, 15), false);
+
                 summaryChart.getXAxis().setValueFormatter(new ValueFormatter() {
                     @Override
                     public String getFormattedValue(float value) {
@@ -208,5 +230,16 @@ public class WaterActivity extends AppCompatActivity {
             }
             txtProgress.append(goalMsg);
         }
+    }
+
+    /**
+     * YENİ EKLENEN METOT
+     * Kullanıcı su içtiğinde, kullanıcıyı darlamamak adına sıradaki alarmı
+     * bulunduğu andan itibaren 2 saat sonrasına ertelemek için AlarmReceiver'a yayın gönderir.
+     */
+    private void rescheduleAlarm() {
+        Intent intent = new Intent(this, AlarmReceiver.class);
+        intent.putExtra("type", "reschedule");
+        sendBroadcast(intent);
     }
 }

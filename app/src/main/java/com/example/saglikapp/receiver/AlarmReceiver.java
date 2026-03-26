@@ -26,8 +26,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         String alarmType = intent.getStringExtra("type");
 
         if ("water".equals(alarmType)) {
-            // --- GÜVENLİK KONTROLÜ ---
-            // Eğer sistem alarmı geciktirdiyse ve şu an uyku vaktindeysek bildirim gösterme
+            // Uyku saatindeysek bildirimi iptal et ve sabahki alarmı kur
             if (isCurrentTimeInSleepRange(context)) {
                 Log.d("AlarmReceiver", "Uyku saatindeyiz, bildirim iptal edildi. Bir sonraki sabah için planlanıyor.");
                 scheduleNextAlarm(context);
@@ -36,6 +35,13 @@ public class AlarmReceiver extends BroadcastReceiver {
 
             showWaterNotification(context);
             scheduleNextAlarm(context);
+
+        } else if ("reschedule".equals(alarmType)) {
+            // Kullanıcı kendi isteğiyle su içtiğinde tetiklenir.
+            // Bildirim GÖSTERMEDEN alarmı bulunduğu andan itibaren 2 saat sonraya öteler.
+            Log.d("AlarmReceiver", "Kullanıcı su içti, alarm 2 saat sonraya erteleniyor.");
+            scheduleNextAlarm(context);
+
         } else {
             String message = intent.getStringExtra("message");
             if (message == null) message = "Uyanma Vakti!";
@@ -52,16 +58,30 @@ public class AlarmReceiver extends BroadcastReceiver {
         Calendar wakeUp = getCalendarFromTime(wakeUpStr);
         Calendar bedTime = getCalendarFromTime(bedTimeStr);
 
-        if (bedTime.before(wakeUp)) bedTime.add(Calendar.DAY_OF_YEAR, 1);
+        // Gece kuşu ayarı: Uyuma saati uyanma saatinden önceyse ertesi güne at
+        if (bedTime.before(wakeUp)) {
+            bedTime.add(Calendar.DAY_OF_YEAR, 1);
+        }
 
-        // Eğer şu an uyanma vaktinden önceyse VEYA yatma vaktinden sonraysa uykudayızdır.
+        // Dünkü döngünün içindeysek kontrolü (Örn: Şu an 01:00, kalkış 10:00, yatış dünden 02:00)
+        Calendar yesterdayWake = (Calendar) wakeUp.clone();
+        yesterdayWake.add(Calendar.DAY_OF_YEAR, -1);
+
+        Calendar yesterdayBed = (Calendar) bedTime.clone();
+        yesterdayBed.add(Calendar.DAY_OF_YEAR, -1);
+
+        if (now.after(yesterdayWake) && now.before(yesterdayBed)) {
+            wakeUp = yesterdayWake;
+            bedTime = yesterdayBed;
+        }
+
+        // Şimdi güvenle kontrol edebiliriz: Uyanma saatinden önce VEYA uyuma saatinden sonra mı?
         return now.before(wakeUp) || now.after(bedTime);
     }
 
     private void showWaterNotification(Context context) {
-        // --- İSMİ ÇEKME KISMI ---
         SharedPreferences sharedPref = context.getSharedPreferences("UserData", Context.MODE_PRIVATE);
-        String userName = sharedPref.getString("name", "Dostum"); // Eğer isim yoksa "Dostum" yazar
+        String userName = sharedPref.getString("name", "Dostum");
 
         Intent tapIntent = new Intent(context, WaterActivity.class);
         tapIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -75,7 +95,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_menu_agenda)
-                .setContentTitle("Su Vakti, " + userName + "! 💧") // İsmi başlığa ekledik
+                .setContentTitle("Su Vakti, " + userName + "! 💧")
                 .setContentText("Hedefine ulaşmak için bir bardak su içmeyi unutma.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
@@ -105,12 +125,10 @@ public class AlarmReceiver extends BroadcastReceiver {
         Calendar wakeUpTime = getCalendarFromTime(wakeUpStr);
         Calendar bedTime = getCalendarFromTime(bedTimeStr);
 
-        // Gece kuşu ayarı
         if (bedTime.before(wakeUpTime)) {
             bedTime.add(Calendar.DAY_OF_YEAR, 1);
         }
 
-        // Eğer şu an dünkü döngünün içindeysek (gece 01:00 ama yatış 02:00 gibi)
         Calendar yesterdayWake = (Calendar) wakeUpTime.clone(); yesterdayWake.add(Calendar.DAY_OF_YEAR, -1);
         Calendar yesterdayBed = (Calendar) bedTime.clone(); yesterdayBed.add(Calendar.DAY_OF_YEAR, -1);
 
@@ -118,7 +136,6 @@ public class AlarmReceiver extends BroadcastReceiver {
             wakeUpTime = yesterdayWake;
             bedTime = yesterdayBed;
         } else if (now.after(bedTime)) {
-            // Normal gün aşımı
             wakeUpTime.add(Calendar.DAY_OF_YEAR, 1);
             bedTime.add(Calendar.DAY_OF_YEAR, 1);
         }
@@ -129,14 +146,12 @@ public class AlarmReceiver extends BroadcastReceiver {
         Calendar nextAlarmTime;
 
         if (!now.before(lastCallTime)) {
-            // Gün bitti, yarın sabah uyanış + 5dk
             nextAlarmTime = (Calendar) wakeUpTime.clone();
             if (!nextAlarmTime.after(now)) {
                 nextAlarmTime.add(Calendar.DAY_OF_YEAR, 1);
             }
             nextAlarmTime.add(Calendar.MINUTE, 5);
         } else {
-            // Gün içindeyiz
             Calendar potentialNextTime = (Calendar) now.clone();
             potentialNextTime.add(Calendar.HOUR_OF_DAY, 2);
 
@@ -151,9 +166,6 @@ public class AlarmReceiver extends BroadcastReceiver {
     }
 
     private void setAlarm(Context context, long timeInMillis) {
-        // --- GEÇMİŞ ZAMAN KORUMASI ---
-        // Eğer hesaplanan zaman şu andan küçükse (veya çok yakınsa),
-        // Android alarmı hemen tetikler. Bunu engellemek için en az 10 saniye sonraya kuruyoruz.
         long currentTime = System.currentTimeMillis();
         if (timeInMillis <= currentTime) {
             timeInMillis = currentTime + 10000;
@@ -161,7 +173,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, AlarmReceiver.class);
-        intent.putExtra("type", "water");
+        intent.putExtra("type", "water"); // Gelecekte çalacak alarm her zaman 'water' tipindedir
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context, 100, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE

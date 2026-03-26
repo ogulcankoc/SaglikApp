@@ -46,8 +46,8 @@ public class WaterViewModel extends AndroidViewModel {
         // 1. Önce gün kontrolü yap ve gerekirse sıfırla
         checkAndResetDailyWater();
 
-        // 2. Hedefi hesapla
-        calculateAndSetGoal();
+        // 2. Hedefi yükle (artık hesaplama önceliği yok, kayıtlı olanı kullanacağız)
+        loadGoal();
     }
 
     // GÜN KONTROLÜ: Eğer yeni bir güne girildiyse su miktarını sıfırla
@@ -70,23 +70,29 @@ public class WaterViewModel extends AndroidViewModel {
         }
     }
 
-    private void calculateAndSetGoal() {
+    //Hedefi SharedPreferences'tan yükle, yoksa ağırlığa göre hesapla
+    private void loadGoal() {
         int savedGoal = waterPref.getInt("daily_goal", 0);
+
+        // Eğer daha önce manuel bir hedef girilmişse, onu kullan
         if (savedGoal > 0) {
             dailyGoal = savedGoal;
         } else {
-            String weightStr = userPref.getString("weight", "70"); // Varsayılan 70
+            // Manuel hedef yoksa, güncel ağırlığı çek
+            String weightStr = userPref.getString("weight", "70");
             try {
                 int weight = Integer.parseInt(weightStr);
                 if (weight > 0) {
                     dailyGoal = weight * 33;
                 } else {
-                    dailyGoal = 2500;
+                    dailyGoal = 2500; // Varsayılan değer
                 }
             } catch (NumberFormatException e) {
                 dailyGoal = 2500;
             }
-            saveGoal();
+            // NOT: Burada saveGoal() metodunu çağırmıyoruz,
+            // çünkü kullanıcı henüz kendi manuel hedefini belirlemedi.
+            // Sadece hesaplanan değeri dailyGoal değişkenine atadık.
         }
     }
 
@@ -108,7 +114,7 @@ public class WaterViewModel extends AndroidViewModel {
     public void updateGoal(int newGoal) {
         if (newGoal > 0) {
             dailyGoal = newGoal;
-            saveGoal();
+            saveGoal(); // Yeni hedefi kalıcı olarak kaydet
         }
     }
 
