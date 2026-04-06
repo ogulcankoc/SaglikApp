@@ -26,9 +26,9 @@ public class AlarmReceiver extends BroadcastReceiver {
         String alarmType = intent.getStringExtra("type");
 
         if ("water".equals(alarmType)) {
-            // Uyku saatindeysek bildirimi iptal et ve sabahki alarmı kur
-            if (isCurrentTimeInSleepRange(context)) {
-                Log.d("AlarmReceiver", "Uyku saatindeyiz, bildirim iptal edildi. Bir sonraki sabah için planlanıyor.");
+            // Uyku saatindeysek VEYA günlük hedef tamamlanmışsa bildirimi iptal et ve ertesi sabaha kur
+            if (isCurrentTimeInSleepRange(context) || isWaterGoalReached(context)) {
+                Log.d("AlarmReceiver", "Uyku saatindeyiz veya hedef tamamlandı. Bildirim gösterilmeyecek.");
                 scheduleNextAlarm(context);
                 return;
             }
@@ -38,8 +38,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         } else if ("reschedule".equals(alarmType)) {
             // Kullanıcı kendi isteğiyle su içtiğinde tetiklenir.
-            // Bildirim GÖSTERMEDEN alarmı bulunduğu andan itibaren 2 saat sonraya öteler.
-            Log.d("AlarmReceiver", "Kullanıcı su içti, alarm 2 saat sonraya erteleniyor.");
+            Log.d("AlarmReceiver", "Kullanıcı su içti, alarm durumu güncelleniyor.");
             scheduleNextAlarm(context);
 
         } else {
@@ -47,6 +46,17 @@ public class AlarmReceiver extends BroadcastReceiver {
             if (message == null) message = "Uyanma Vakti!";
             showSleepNotification(context, message);
         }
+    }
+
+    // --- YENİ EKLENEN METOT: Kullanıcının hedefe ulaşıp ulaşmadığını kontrol eder ---
+    private boolean isWaterGoalReached(Context context) {
+        SharedPreferences sharedPref = context.getSharedPreferences("UserData", Context.MODE_PRIVATE);
+        // ÖNEMLİ: "currentWater" ve "waterGoal" anahtarlarını, uygulamanızda su miktarını
+        // kaydettiğiniz isimlerle (key) birebir aynı olacak şekilde güncelleyin.
+        int currentWater = sharedPref.getInt("today_water", 0);
+        int dailyGoal = sharedPref.getInt("daily_goal", 2000); // Varsayılan hedef 2000 ml
+
+        return currentWater >= dailyGoal && dailyGoal > 0;
     }
 
     private boolean isCurrentTimeInSleepRange(Context context) {
@@ -95,7 +105,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_menu_agenda)
-                .setContentTitle("Su Vakti, " + userName + "! 💧")
+                .setContentTitle("Su Vakti, " + userName + "! \uD83D\uDCA7")
                 .setContentText("Hedefine ulaşmak için bir bardak su içmeyi unutma.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
@@ -108,7 +118,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         createNotificationChannel(context);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .setContentTitle("Uyku Alarmı 🌙")
+                .setContentTitle("Uyku Alarmı \uD83C\uDF19")
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true);
@@ -140,6 +150,21 @@ public class AlarmReceiver extends BroadcastReceiver {
             bedTime.add(Calendar.DAY_OF_YEAR, 1);
         }
 
+        // --- EKLENEN KISIM: Uyku saati VEYA Hedef Doldu Kontrolü ---
+        // Eğer uyku saatindeysek ya da günlük hedef dolduysa 1 saat sonrasını hesaplama, doğrudan sabaha kur.
+        if (isCurrentTimeInSleepRange(context) || isWaterGoalReached(context)) {
+            Calendar nextAlarmTime = (Calendar) wakeUpTime.clone();
+            if (!nextAlarmTime.after(now)) {
+                nextAlarmTime.add(Calendar.DAY_OF_YEAR, 1);
+            }
+            nextAlarmTime.add(Calendar.MINUTE, 5); // Uyanma saatinden 5 dakika sonrasına planla
+
+            setAlarm(context, nextAlarmTime.getTimeInMillis());
+            return;
+        }
+        // -----------------------------------------------------------
+
+        // --- GÜNDÜZ SAATİ (Mevcut Mantık) ---
         Calendar lastCallTime = (Calendar) bedTime.clone();
         lastCallTime.add(Calendar.MINUTE, -15);
 
@@ -153,7 +178,7 @@ public class AlarmReceiver extends BroadcastReceiver {
             nextAlarmTime.add(Calendar.MINUTE, 5);
         } else {
             Calendar potentialNextTime = (Calendar) now.clone();
-            potentialNextTime.add(Calendar.HOUR_OF_DAY, 2);
+            potentialNextTime.add(Calendar.HOUR_OF_DAY, 1); // 1 saat sonraya kur
 
             if (potentialNextTime.after(lastCallTime)) {
                 nextAlarmTime = lastCallTime;
