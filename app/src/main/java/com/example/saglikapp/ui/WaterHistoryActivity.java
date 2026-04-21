@@ -6,7 +6,7 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.saglikapp.R;
 import com.example.saglikapp.data.WaterDao;
-import com.example.saglikapp.data.WaterDatabase;
+import com.example.saglikapp.data.AppDatabase;
 import com.example.saglikapp.data.WaterLog;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -40,7 +40,7 @@ public class WaterHistoryActivity extends AppCompatActivity {
         barChart = findViewById(R.id.barChart);
         Button btnBack = findViewById(R.id.btnBack);
 
-        waterDao = WaterDatabase.getInstance(this).waterDao();
+        waterDao = AppDatabase.getInstance(this).waterDao();
 
         setupChartAppearance(); // Grafiğin görsel ayarları
         loadChartData();        // Verilerin yüklenmesi
@@ -67,9 +67,13 @@ public class WaterHistoryActivity extends AppCompatActivity {
         xAxis.setTextSize(11f);
         xAxis.setYOffset(5f); // Yazıyı eksen çizgisine yaklaştır (kesilmeyi önler)
 
-        // --- ÖNEMLİ: Sütunların devleşmesini engellemek için 7 günlük alan ayırıyoruz ---
+        // --- ÖNEMLİ: Sütunların devleşmesini engellemek için 14 günlük alan ayırıyoruz ---
         xAxis.setAxisMinimum(-0.5f);
-        xAxis.setAxisMaximum(6.5f);
+        xAxis.setAxisMaximum(13.5f);
+        // YENİ EKLENEN KISIM: Kaydırma (Scroll) Özellikleri
+
+        barChart.setDragEnabled(true);   // Sağa-sola kaydırmayı aktifleştir
+        barChart.setScaleEnabled(false); // Zoom (yakınlaştırma) özelliğini kapat (sadece kaydırma olsun)
 
         // Sol Y Ekseni Ayarları
         YAxis leftAxis = barChart.getAxisLeft();
@@ -85,7 +89,7 @@ public class WaterHistoryActivity extends AppCompatActivity {
 
     private void loadChartData() {
         executorService.execute(() -> {
-            List<WaterLog> logs = waterDao.getLastSevenDays();
+            List<WaterLog> logs = waterDao.getLastFourteenDays();
 
             // Verileri eskiden yeniye doğru sırala
             Collections.reverse(logs);
@@ -141,6 +145,12 @@ public class WaterHistoryActivity extends AppCompatActivity {
                 data.setBarWidth(0.5f); // Sütun genişliğini sabitledik
 
                 barChart.setData(data);
+                // Ekranda aynı anda en fazla 7 gün göster
+                barChart.setVisibleXRangeMaximum(7f);
+                barChart.setVisibleXRangeMinimum(7f);
+                // Kullanıcı ekranı açtığında otomatik olarak en güncel verilere (en sağa) kaysın
+                float scrollToX = Math.max(0f, entries.size() - 7f);
+                barChart.moveViewToX(scrollToX);
                 barChart.animateY(1000);
                 barChart.invalidate();
             });

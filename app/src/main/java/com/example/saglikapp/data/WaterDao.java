@@ -18,7 +18,10 @@ public interface WaterDao {
     @Query("SELECT * FROM water_logs ORDER BY date DESC LIMIT 7")
     List<WaterLog> getLastSevenDays();
 
-    // Belirli bir tarihteki veriyi getirir (Bugünü kontrol etmek için lazım olabilir)
+    @Query("SELECT * FROM water_logs ORDER BY date DESC LIMIT 14")
+    List<WaterLog> getLastFourteenDays();
+
+    // Belirli bir tarihteki veriyi getirir
     @Query("SELECT * FROM water_logs WHERE date = :date LIMIT 1")
     WaterLog getLogByDate(String date);
 }

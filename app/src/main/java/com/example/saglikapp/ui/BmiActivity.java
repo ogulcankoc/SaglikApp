@@ -48,7 +48,7 @@ public class BmiActivity extends AppCompatActivity {
             return;
         }
 
-        // 2. HESAPLAMA İŞİNİ VİEWMODEL'E DEVREDİYORUZ (Business Logic Activity'den çıktı!)
+        //  HESAPLAMA İŞİNİ VİEWMODEL'E DEVREDİYORUZ
         viewModel.calculateBmi(heightCm, weightKg);
 
         TextView tvSummary  = findViewById(R.id.tvSummary);

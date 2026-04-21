@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 
 import com.example.saglikapp.data.WaterDao;
-import com.example.saglikapp.data.WaterDatabase;
+import com.example.saglikapp.data.AppDatabase;
 import com.example.saglikapp.data.WaterLog;
 
 import java.text.SimpleDateFormat;
@@ -37,7 +37,7 @@ public class WaterViewModel extends AndroidViewModel {
         waterPref = application.getSharedPreferences("WaterData", Context.MODE_PRIVATE);
 
         // Room Veritabanını Başlat
-        WaterDatabase db = WaterDatabase.getInstance(application);
+        AppDatabase db = AppDatabase.getInstance(application);
         waterDao = db.waterDao();
 
         // Bugünün tarihini belirle

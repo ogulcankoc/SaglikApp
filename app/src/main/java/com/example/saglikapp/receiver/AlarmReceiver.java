@@ -13,6 +13,7 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
+import com.example.saglikapp.R;
 import com.example.saglikapp.ui.WaterActivity;
 
 import java.util.Calendar;
@@ -105,6 +106,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_menu_agenda)
+                .setColor(androidx.core.content.ContextCompat.getColor(context, R.color.blue))
                 .setContentTitle("Su Vakti, " + userName + "! \uD83D\uDCA7")
                 .setContentText("Hedefine ulaşmak için bir bardak su içmeyi unutma.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

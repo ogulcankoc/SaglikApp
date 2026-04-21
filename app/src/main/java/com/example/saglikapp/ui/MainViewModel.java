@@ -44,7 +44,7 @@ public class MainViewModel extends AndroidViewModel {
 
     public static class AlarmCalculator {
 
-        private static final int ALARM_BOUNDARY_MINUTES = 5;
+        private static final int ALARM_BOUNDARY_MINUTES = 15;
         private static final int ALARM_INTERVAL_HOURS   = 1;
 
         public Calendar calculateFirstAlarmTime(String wakeUpTimeStr, String bedTimeStr) {
@@ -105,7 +105,7 @@ public class MainViewModel extends AndroidViewModel {
                 // DURUM 3: Gün içindeyiz, 2'şer saat ekleyerek ilerle
                 Calendar nextAlarm = (Calendar) firstAlarm.clone();
                 while (!nextAlarm.after(now)) {
-                    nextAlarm.add(Calendar.HOUR_OF_DAY, ALARM_INTERVAL_HOURS);
+                        nextAlarm.add(Calendar.HOUR_OF_DAY, ALARM_INTERVAL_HOURS);
                 }
 
                 // Eğer hesaplanan bir sonraki alarm yatış vaktinden sonraysa, son alarmı ver

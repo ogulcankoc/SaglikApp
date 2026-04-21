@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.saglikapp.R;
-import com.example.saglikapp.data.WaterDatabase;
+import com.example.saglikapp.data.AppDatabase;
 import com.example.saglikapp.data.WaterLog;
 import com.example.saglikapp.receiver.AlarmReceiver;
 import com.github.mikephil.charting.charts.BarChart;
@@ -144,7 +144,7 @@ public class WaterActivity extends AppCompatActivity {
     // Verileri Room'dan Çekip Grafiğe Basma
     private void loadSummaryData() {
         executorService.execute(() -> {
-            WaterDatabase db = WaterDatabase.getInstance(this);
+            AppDatabase db = AppDatabase.getInstance(this);
             List<WaterLog> logs = db.waterDao().getLastSevenDays();
             Collections.reverse(logs);
 
@@ -232,8 +232,7 @@ public class WaterActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * YENİ EKLENEN METOT
+    /*?
      * Kullanıcı su içtiğinde, kullanıcıyı darlamamak adına sıradaki alarmı
      * bulunduğu andan itibaren 2 saat sonrasına ertelemek için AlarmReceiver'a yayın gönderir.
      */
