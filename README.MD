@@ -7,6 +7,7 @@ Android tabanlı kişisel sağlık  takip uygulaması.
 - 💧 **Su İçme Takibi**: Grafiksel olarak günlük su tüketimi takibi ve günlük olarak su içme hatırlatıcıları
 - 🏋️ **Vücut Kitle Endeksi**: Kullanıcıdan alınan bilgilere göre BMI hesaplama ve bilgilendirme
 - 😴 **Uyku Döngüsü**: Uyku saatine göre uyku döngülerine uygun uyanma saatlerinin belirlenmesi
+- ❤️ **Nabız Tespiti**: Telefonun Kamerası ve flaşı kullanılarak PPG yöntemi ile nabız tespiti
 
 ## 🛠️ Teknolojiler
 
@@ -24,6 +25,7 @@ Android tabanlı kişisel sağlık  takip uygulaması.
   <img src="screenshots/SuTakibiEkran.png" width="18%" alt="Su Takibi">
   <img src="screenshots/vkiekran.png" width="18%" alt="VKI Ekranı">
   <img src="screenshots/sleepCycleEkran.png" width="18%" alt="Uyku Döngüsü">
+  <img src="screenshots/heartRate.png" width="18%" alt="Kalp Ritmi">
 </p>
 
 
@@ -32,7 +34,7 @@ Android tabanlı kişisel sağlık  takip uygulaması.
 - [✅] Room Database entegrasyonu
 - [✅] Grafikler ekleme
 - [✅] Hatırlatma Bildirim sistemi
-- [ ] **Kalp Ritmi**: Nabız ölçümü
+- [✅] **Kalp Ritmi**: Nabız ölçümü
 
 ## Geliştirici
 
