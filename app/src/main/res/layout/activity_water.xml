@@ -1,156 +1,191 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F5F9FF"
-    android:gravity="center_horizontal"
-    android:padding="24dp">
+    android:fillViewport="true"
+    android:background="#F5F9FF">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Su Takibi"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="#1565C0"
-        android:layout_marginBottom="20dp"/>
-
-    <!-- MODERNLEŞTİRİLMİŞ PROGRESS BAR -->
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="4dp"
-        android:background="@drawable/abc_cab_background_internal_bg"
-        android:elevation="8dp"
-        android:outlineProvider="background">
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="24dp">
 
-        <ProgressBar
-            android:id="@+id/progressBarWater"
-            style="?android:attr/progressBarStyleHorizontal"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Su Takibi"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#1565C0"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- MODERNLEŞTİRİLMİŞ PROGRESS BAR -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:progressDrawable="@drawable/custom_water_progress"
-            android:progress="40"
-            android:max="100" />
-    </FrameLayout>
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            android:background="@android:color/white"
+            android:elevation="8dp"
+            android:outlineProvider="background">
 
-    <!-- Özet Grafik -->
-    <com.github.mikephil.charting.charts.BarChart
-        android:id="@+id/summaryChart"
-        android:layout_width="match_parent"
-        android:layout_height="180dp"
-        android:layout_marginTop="20dp"
-        android:background="@android:color/white"
-        android:elevation="2dp" />
+            <ProgressBar
+                android:id="@+id/progressBarWater"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:progressDrawable="@drawable/custom_water_progress"
+                android:progress="40"
+                android:max="100" />
+        </FrameLayout>
 
-    <TextView
-        android:id="@+id/txtProgress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0 / 2500 ml"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginTop="15dp"
-        android:textColor="#1976D2"/>
+        <!-- Özet Grafik -->
+        <com.github.mikephil.charting.charts.BarChart
+            android:id="@+id/summaryChart"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_marginTop="20dp"
+            android:background="@android:color/white"
+            android:elevation="2dp" />
 
-    <Button
-        android:id="@+id/btnShowHistory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Detaylı Geçmişi Gör"
-        android:layout_marginTop="8dp"
-        android:backgroundTint="#90CAF9"
-        android:textColor="#0D47A1"
-        android:textSize="11sp"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:minHeight="48dp"/>
+        <TextView
+            android:id="@+id/txtProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 / 2500 ml"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginTop="15dp"
+            android:textColor="#1976D2"/>
 
-    <!-- Hedef Ayarlama Alanı -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp">
+        <Button
+            android:id="@+id/btnShowHistory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Detaylı Geçmişi Gör"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#90CAF9"
+            android:textColor="#0D47A1"
+            android:textSize="11sp"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:minHeight="48dp"/>
 
+        <!-- Hedef Ayarlama Alanı -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:padding="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Günlük Hedef: "
+                    android:textColor="#546E7A"/>
+
+                <EditText
+                    android:id="@+id/editWaterGoal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:minWidth="48dp"
+                    android:inputType="number"
+                    android:text="2500"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:background="@android:drawable/edit_text"
+                    android:importantForAccessibility="yes" />
+
+                <Button
+                    android:id="@+id/btnUpdateGoal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="Ayarla"
+                    android:textSize="12sp"
+                    android:layout_marginStart="10dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Su Ekleme Butonları -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:padding="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Günlük Hedef: "
-                android:textColor="#546E7A"/>
-
-            <EditText
-                android:id="@+id/editWaterGoal"
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:minWidth="48dp"
-                android:inputType="number"
-                android:text="2500"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:padding="8dp"
-                android:background="@android:drawable/edit_text"
-                android:importantForAccessibility="yes" />
+            android:layout_marginTop="25dp">
 
             <Button
-                android:id="@+id/btnUpdateGoal"
+                android:id="@+id/btnAdd200"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:text="+200 ml"
+                android:textAllCaps="false"
+                android:backgroundTint="#4FC3F7"
+                android:layout_marginEnd="10dp"
+                app:cornerRadius="15dp"/>
+
+            <Button
+                android:id="@+id/btnAdd500"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                android:text="+500 ml"
+                android:textAllCaps="false"
+                android:backgroundTint="#2196F3"
+                app:cornerRadius="15dp"/>
+        </LinearLayout>
+
+        <!-- Özel Su Ekleme Bölümü -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="15dp">
+
+            <EditText
+                android:id="@+id/editCustomWater"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:inputType="number"
+                android:hint="ml girin"
+                android:gravity="center"
+                android:background="@android:drawable/edit_text"/>
+
+            <Button
+                android:id="@+id/btnAddCustom"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
-                android:text="Ayarla"
-                android:textSize="12sp"
-                android:layout_marginStart="10dp"/>
+                android:text="Ekle"
+                android:layout_marginStart="10dp"
+                android:backgroundTint="#03A9F4"
+                app:cornerRadius="15dp"/>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Su Ekleme Butonları -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="25dp">
 
         <Button
-            android:id="@+id/btnAdd200"
-            android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_weight="1"
-            android:text="+200 ml"
-            android:textAllCaps="false"
-            android:backgroundTint="#4FC3F7"
-            android:layout_marginEnd="10dp"
-            app:cornerRadius="15dp"/>
+            android:id="@+id/btnResetWater"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sıfırla"
+            android:textColor="#D32F2F"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_marginTop="10dp"
+            android:minHeight="48dp"/>
 
-        <Button
-            android:id="@+id/btnAdd500"
-            android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_weight="1"
-            android:text="+500 ml"
-            android:textAllCaps="false"
-            android:backgroundTint="#2196F3"
-            app:cornerRadius="15dp"/>
     </LinearLayout>
-
-    <Button
-        android:id="@+id/btnResetWater"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sıfırla"
-        android:textColor="#D32F2F"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_marginTop="10dp"
-        android:minHeight="48dp"/>
-
-</LinearLayout>
+</ScrollView>

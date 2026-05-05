@@ -28,12 +28,14 @@ public class WelcomeActivity extends AppCompatActivity {
         Button btnBmi = findViewById(R.id.btnBmi);
         Button btnSleep = findViewById(R.id.btnSleep);
         Button btnWater = findViewById(R.id.btnWater);
+        Button btnHeart = findViewById(R.id.btnHeart);
         ImageButton btnProfile = findViewById(R.id.btnProfile);
 
         // Tıklama Olayları
         btnBmi.setOnClickListener(v -> startActivity(new Intent(this, BmiActivity.class)));
         btnSleep.setOnClickListener(v -> startActivity(new Intent(this, SleepActivity.class)));
         btnWater.setOnClickListener(v -> startActivity(new Intent(this, WaterActivity.class)));
+        btnHeart.setOnClickListener(v -> startActivity(new Intent(this, HeartRateActivity.class)));
         btnProfile.setOnClickListener(v -> startActivity(new Intent(this, ProfileActivity.class)));
     }
 

@@ -45,7 +45,7 @@ public class MainViewModel extends AndroidViewModel {
     public static class AlarmCalculator {
 
         private static final int ALARM_BOUNDARY_MINUTES = 15;
-        private static final int ALARM_INTERVAL_HOURS   = 1;
+        private static final int ALARM_INTERVAL_HOURS   = 2;
 
         public Calendar calculateFirstAlarmTime(String wakeUpTimeStr, String bedTimeStr) {
             try {

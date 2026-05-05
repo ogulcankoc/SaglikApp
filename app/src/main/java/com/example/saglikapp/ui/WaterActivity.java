@@ -38,6 +38,7 @@ public class WaterActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private TextView txtProgress;
     private EditText editWaterGoal;
+    private EditText editCustomWater;
 
     // Özet Grafik Değişkenleri
     private BarChart summaryChart;
@@ -55,6 +56,7 @@ public class WaterActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBarWater);
         txtProgress = findViewById(R.id.txtProgress);
         editWaterGoal = findViewById(R.id.editWaterGoal);
+        editCustomWater = findViewById(R.id.editCustomWater);
         summaryChart = findViewById(R.id.summaryChart); // XML'e eklediğimiz grafik
 
         Button btnUpdateGoal = findViewById(R.id.btnUpdateGoal);
@@ -62,6 +64,7 @@ public class WaterActivity extends AppCompatActivity {
         Button btnAdd500 = findViewById(R.id.btnAdd500);
         Button btnReset = findViewById(R.id.btnResetWater);
         Button btnShowHistory = findViewById(R.id.btnShowHistory);
+        Button btnAddCustom = findViewById(R.id.btnAddCustom);
 
         // Başlangıç değerini set et
         editWaterGoal.setText(String.valueOf(viewModel.getDailyGoal()));
@@ -100,6 +103,29 @@ public class WaterActivity extends AppCompatActivity {
             updateUI();
             loadSummaryData(); // Su ekleyince grafiği tazele
             rescheduleAlarm(); // YENİ: Kullanıcı su içti, bildirim döngüsünü sıfırla
+        });
+
+        btnAddCustom.setOnClickListener(v -> {
+            String amountStr = editCustomWater.getText().toString().trim();
+            if (!amountStr.isEmpty()) {
+                try {
+                    int amount = Integer.parseInt(amountStr);
+                    if (amount > 0) {
+                        viewModel.addWater(amount);
+                        updateUI();
+                        loadSummaryData();
+                        rescheduleAlarm();
+                        editCustomWater.setText(""); // İşlem sonrası kutucuğu temizle
+                        Toast.makeText(this, amount + " ml eklendi!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Lütfen 0'dan büyük bir değer girin.", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (NumberFormatException e) {
+                    Toast.makeText(this, "Geçerli bir sayı girin.", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Lütfen miktar girin.", Toast.LENGTH_SHORT).show();
+            }
         });
 
         btnReset.setOnClickListener(v -> {
