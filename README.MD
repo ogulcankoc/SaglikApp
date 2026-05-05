@@ -20,12 +20,12 @@ Android tabanlı kişisel sağlık  takip uygulaması.
 ## 📸 Ekran Görüntüleri
 
 <p align="center">
-  <img src="screenshots/KayıtEkran.png" width="15%" alt="Kayıt Ekranı">
-  <img src="screenshots/AnaEkran.png" width="15%" alt="Ana Ekran">
-  <img src="screenshots/SuTakibiEkran.png" width="15%" alt="Su Takibi">
-  <img src="screenshots/vkiekran.png" width="15%" alt="VKI Ekranı">
-  <img src="screenshots/sleepCycleEkran.png" width="15%" alt="Uyku Döngüsü">
-  <img src="screenshots/heartRate.png" width="15%" alt="Kalp Ritmi">
+  <img src="screenshots/KayıtEkran.png" width="16%" alt="Kayıt Ekranı">
+  <img src="screenshots/AnaEkran.png" width="16%" alt="Ana Ekran">
+  <img src="screenshots/SuTakibiEkran.png" width="16%" alt="Su Takibi">
+  <img src="screenshots/vkiekran.png" width="16%" alt="VKI Ekranı">
+  <img src="screenshots/sleepCycleEkran.png" width="16%" alt="Uyku Döngüsü">
+  <img src="screenshots/heartRate.png" width="16%" alt="Kalp Ritmi">
 </p>
 
 
