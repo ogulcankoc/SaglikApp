@@ -87,8 +87,8 @@ public class ProfileActivity extends AppCompatActivity {
             viewModel.saveProfileData(newName, newAge, newWeight, newHeight, newGender, newWakeUp, newBedTime);
 
             // Yeni alarm zamanını hesapla
-            Calendar alarmTime = new ProfileViewModel.AlarmCalculator()
-                    .calculateFirstAlarmTime(newWakeUp, newBedTime);
+            Calendar alarmTime = new MainViewModel.AlarmCalculator()
+                    .calculateFirstAlarmTime(this, newWakeUp, newBedTime);
 
             if (alarmTime != null) {
                 scheduleFirstAlarm(alarmTime);

@@ -1,94 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="#fa82aa">
-
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="18dp"
-    android:background="#fa82aa">
+    android:layout_height="match_parent">
 
-    <!-- Profil butonu sağ üst köşede -->
+    <!-- Kaydırma özelliğini sağlayan ViewPager2 -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottom_navigation" />
 
-    <!-- Hoşgeldin Mesajı -->
-
-    <ImageButton
-        android:id="@+id/btnProfile"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="0dp"
-        android:layout_marginEnd="0dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="Profil"
-        android:scaleType="fitXY"
-        android:src="@android:drawable/ic_menu_myplaces" />
-
-    <TextView
-        android:id="@+id/textWelcome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hoşgeldin"
-        android:textColor="@color/black"
-        android:textSize="17sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginTop="60dp"
-        android:layout_centerHorizontal="true" />
-
-    <!-- Alt alta yuvarlak büyük butonlar -->
-    <LinearLayout
+    <!-- Alt menü -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:layout_below="@id/textWelcome"
-        android:layout_marginTop="24dp">
-
-        <Button
-            android:id="@+id/btnWater"
-            android:layout_width="300dp"
-            android:layout_height="100dp"
-            android:background="@drawable/round_button"
-            android:text="Su İçme\nHatırlatıcı"
-            android:textColor="@android:color/white"
-            android:textStyle="bold"
-            android:layout_marginBottom="20dp"/>
-
-        <Button
-            android:id="@+id/btnBmi"
-            android:layout_width="300dp"
-            android:layout_height="100dp"
-            android:background="@drawable/round_button"
-            android:text="Vücut Kitle\nEndeksi"
-            android:textColor="@android:color/white"
-            android:textStyle="bold"
-            android:layout_marginBottom="20dp"/>
-
-        <Button
-            android:id="@+id/btnSleep"
-            android:layout_width="300dp"
-            android:layout_height="100dp"
-            android:background="@drawable/round_button"
-            android:text="Uyku Döngüsü\nAlarm"
-            android:textColor="@android:color/white"
-            android:textStyle="bold"
-            android:layout_marginBottom="20dp"/>
-
-        <Button
-            android:id="@+id/btnHeart"
-            android:layout_width="300dp"
-            android:layout_height="100dp"
-            android:background="@drawable/round_button"
-            android:text="Kalp Ritmi Ölçme"
-            android:textColor="@android:color/white"
-            android:textStyle="bold"
-            android:layout_marginBottom="20dp"/>
-    </LinearLayout>
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/black"
+        app:itemIconTint="@color/nav_item_color"
+        app:itemTextColor="@color/nav_item_color"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu" />
 
 </RelativeLayout>
-</ScrollView>

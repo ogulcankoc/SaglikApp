@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="end"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/userMessageTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_message_user"
+        android:elevation="2dp"
+        android:maxWidth="280dp"
+        android:padding="12dp"
+        android:text="Kullanıcı Mesajı"
+        android:textColor="#000000"
+        android:textSize="16sp" />
+</LinearLayout>

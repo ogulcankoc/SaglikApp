@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="Ana Sayfa" />
+
+    <item
+        android:id="@+id/nav_water"
+        android:icon="@drawable/ic_water"
+        android:title="Su-İç" />
+
+    <item
+        android:id="@+id/nav_sleep"
+        android:icon="@drawable/ic_sleep"
+        android:title="Alarm" />
+
+    <item
+        android:id="@+id/nav_heart"
+        android:icon="@drawable/ic_heart"
+        android:title="Nabız" />
+
+    <item
+        android:id="@+id/nav_bmi"
+        android:icon="@drawable/ic_profile"
+        android:title="VKİ" />
+
+</menu>

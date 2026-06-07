@@ -35,7 +35,7 @@ public class BootReceiver extends BroadcastReceiver {
 
                 // Diğer ekranlarla aynı hesaplama mantığını kullanıyoruz
                 MainViewModel.AlarmCalculator calculator = new MainViewModel.AlarmCalculator();
-                Calendar alarmTime = calculator.calculateFirstAlarmTime(wakeUpTime, bedTime);
+                Calendar alarmTime = calculator.calculateFirstAlarmTime(context, wakeUpTime, bedTime);
 
                 if (alarmTime != null) {
                     setAlarmSafely(context, alarmTime.getTimeInMillis());

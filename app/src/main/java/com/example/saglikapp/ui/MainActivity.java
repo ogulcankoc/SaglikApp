@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
             // ViewModel üzerinden güvenli zaman hesaplaması
             Calendar alarmTime = new MainViewModel.AlarmCalculator()
-                    .calculateFirstAlarmTime(wakeUp, bedTime);
+                    .calculateFirstAlarmTime(this, wakeUp, bedTime);
 
             if (alarmTime != null) {
                 scheduleFirstAlarm(alarmTime);

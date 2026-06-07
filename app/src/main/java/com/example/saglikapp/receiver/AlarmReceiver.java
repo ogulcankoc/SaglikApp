@@ -14,7 +14,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 
 import com.example.saglikapp.R;
-import com.example.saglikapp.ui.WaterActivity;
+import com.example.saglikapp.ui.WelcomeActivity;
 
 import java.util.Calendar;
 
@@ -27,7 +27,6 @@ public class AlarmReceiver extends BroadcastReceiver {
         String alarmType = intent.getStringExtra("type");
 
         if ("water".equals(alarmType)) {
-            // Uyku saatindeysek VEYA günlük hedef tamamlanmışsa bildirimi iptal et ve ertesi sabaha kur
             if (isCurrentTimeInSleepRange(context) || isWaterGoalReached(context)) {
                 Log.d("AlarmReceiver", "Uyku saatindeyiz veya hedef tamamlandı. Bildirim gösterilmeyecek.");
                 scheduleNextAlarm(context);
@@ -38,8 +37,7 @@ public class AlarmReceiver extends BroadcastReceiver {
             scheduleNextAlarm(context);
 
         } else if ("reschedule".equals(alarmType)) {
-            // Kullanıcı kendi isteğiyle su içtiğinde tetiklenir.
-            Log.d("AlarmReceiver", "Kullanıcı su içti, alarm durumu güncelleniyor.");
+            Log.d("AlarmReceiver", "Kullanıcı su içti veya ayar değişti, alarm durumu güncelleniyor.");
             scheduleNextAlarm(context);
 
         } else {
@@ -49,13 +47,10 @@ public class AlarmReceiver extends BroadcastReceiver {
         }
     }
 
-    // --- YENİ EKLENEN METOT: Kullanıcının hedefe ulaşıp ulaşmadığını kontrol eder ---
     private boolean isWaterGoalReached(Context context) {
-        SharedPreferences sharedPref = context.getSharedPreferences("UserData", Context.MODE_PRIVATE);
-        // ÖNEMLİ: "currentWater" ve "waterGoal" anahtarlarını, uygulamanızda su miktarını
-        // kaydettiğiniz isimlerle (key) birebir aynı olacak şekilde güncelleyin.
-        int currentWater = sharedPref.getInt("today_water", 0);
-        int dailyGoal = sharedPref.getInt("daily_goal", 2000); // Varsayılan hedef 2000 ml
+        SharedPreferences waterPref = context.getSharedPreferences("WaterData", Context.MODE_PRIVATE);
+        int currentWater = waterPref.getInt("today_water", 0);
+        int dailyGoal = waterPref.getInt("daily_goal", 2500);
 
         return currentWater >= dailyGoal && dailyGoal > 0;
     }
@@ -69,12 +64,10 @@ public class AlarmReceiver extends BroadcastReceiver {
         Calendar wakeUp = getCalendarFromTime(wakeUpStr);
         Calendar bedTime = getCalendarFromTime(bedTimeStr);
 
-        // Gece kuşu ayarı: Uyuma saati uyanma saatinden önceyse ertesi güne at
         if (bedTime.before(wakeUp)) {
             bedTime.add(Calendar.DAY_OF_YEAR, 1);
         }
 
-        // Dünkü döngünün içindeysek kontrolü (Örn: Şu an 01:00, kalkış 10:00, yatış dünden 02:00)
         Calendar yesterdayWake = (Calendar) wakeUp.clone();
         yesterdayWake.add(Calendar.DAY_OF_YEAR, -1);
 
@@ -86,7 +79,6 @@ public class AlarmReceiver extends BroadcastReceiver {
             bedTime = yesterdayBed;
         }
 
-        // Şimdi güvenle kontrol edebiliriz: Uyanma saatinden önce VEYA uyuma saatinden sonra mı?
         return now.before(wakeUp) || now.after(bedTime);
     }
 
@@ -94,7 +86,8 @@ public class AlarmReceiver extends BroadcastReceiver {
         SharedPreferences sharedPref = context.getSharedPreferences("UserData", Context.MODE_PRIVATE);
         String userName = sharedPref.getString("name", "Dostum");
 
-        Intent tapIntent = new Intent(context, WaterActivity.class);
+        // Artık WelcomeActivity'ye yönlendiriyoruz (Sekmeli ana ekran)
+        Intent tapIntent = new Intent(context, WelcomeActivity.class);
         tapIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         PendingIntent pendingIntent = PendingIntent.getActivity(
@@ -133,6 +126,9 @@ public class AlarmReceiver extends BroadcastReceiver {
         String wakeUpStr = sharedPref.getString("wakeUpTime", "08:00");
         String bedTimeStr = sharedPref.getString("bedTime", "23:00");
 
+        // Ayarlardan bildirim aralığını oku (Dakika cinsinden)
+        int waterIntervalMins = sharedPref.getInt("waterIntervalMinutes", 120);
+
         Calendar now = Calendar.getInstance();
         Calendar wakeUpTime = getCalendarFromTime(wakeUpStr);
         Calendar bedTime = getCalendarFromTime(bedTimeStr);
@@ -152,21 +148,16 @@ public class AlarmReceiver extends BroadcastReceiver {
             bedTime.add(Calendar.DAY_OF_YEAR, 1);
         }
 
-        // --- EKLENEN KISIM: Uyku saati VEYA Hedef Doldu Kontrolü ---
-        // Eğer uyku saatindeysek ya da günlük hedef dolduysa 1 saat sonrasını hesaplama, doğrudan sabaha kur.
         if (isCurrentTimeInSleepRange(context) || isWaterGoalReached(context)) {
             Calendar nextAlarmTime = (Calendar) wakeUpTime.clone();
             if (!nextAlarmTime.after(now)) {
                 nextAlarmTime.add(Calendar.DAY_OF_YEAR, 1);
             }
-            nextAlarmTime.add(Calendar.MINUTE, 5); // Uyanma saatinden 5 dakika sonrasına planla
-
+            nextAlarmTime.add(Calendar.MINUTE, 5);
             setAlarm(context, nextAlarmTime.getTimeInMillis());
             return;
         }
-        // -----------------------------------------------------------
 
-        // --- GÜNDÜZ SAATİ (Mevcut Mantık) ---
         Calendar lastCallTime = (Calendar) bedTime.clone();
         lastCallTime.add(Calendar.MINUTE, -15);
 
@@ -180,7 +171,7 @@ public class AlarmReceiver extends BroadcastReceiver {
             nextAlarmTime.add(Calendar.MINUTE, 5);
         } else {
             Calendar potentialNextTime = (Calendar) now.clone();
-            potentialNextTime.add(Calendar.HOUR_OF_DAY, 1); // 1 saat sonraya kur
+            potentialNextTime.add(Calendar.MINUTE, waterIntervalMins); // Dinamik aralık kullanıyoruz
 
             if (potentialNextTime.after(lastCallTime)) {
                 nextAlarmTime = lastCallTime;
@@ -200,7 +191,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, AlarmReceiver.class);
-        intent.putExtra("type", "water"); // Gelecekte çalacak alarm her zaman 'water' tipindedir
+        intent.putExtra("type", "water");
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context, 100, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE

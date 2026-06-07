@@ -18,18 +18,9 @@ public class WelcomeViewModel extends AndroidViewModel {
         sharedPref = application.getSharedPreferences("UserData", Context.MODE_PRIVATE);
     }
 
-    // İş mantığı (Business Logic): Hoş geldin mesajını hazırlayıp UI'a hazır metin sunar
+    // İş mantığı (Business Logic): Sadece isim + hoşgeldin mesajı
     public String getWelcomeMessage() {
         String name = sharedPref.getString("name", "Kullanıcı");
-        String age = sharedPref.getString("age", "-");
-        String weight = sharedPref.getString("weight", "-");
-        String height = sharedPref.getString("height", "-");
-        String gender = sharedPref.getString("gender", "-");
-
-        return name + " hoşgeldin\n\n"
-                + "Yaş: " + age + "\n"
-                + "Kilo: " + weight + " kg\n"
-                + "Boy: " + height + " cm\n"
-                + "Cinsiyet: " + gender;
+        return name + " hoşgeldin";
     }
 }
