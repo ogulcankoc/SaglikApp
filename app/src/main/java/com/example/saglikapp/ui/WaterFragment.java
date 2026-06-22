@@ -42,6 +42,8 @@ public class WaterFragment extends Fragment {
     private WaterViewModel viewModel;
     private ProgressBar progressBar;
     private TextView txtProgress;
+    private TextView txtProgressPercent;
+    private TextView txtGoalReached;
     private EditText editWaterGoal;
     private EditText editCustomWater;
 
@@ -62,6 +64,8 @@ public class WaterFragment extends Fragment {
 
         progressBar = view.findViewById(R.id.progressBarWater);
         txtProgress = view.findViewById(R.id.txtProgress);
+        txtProgressPercent = view.findViewById(R.id.txtProgressPercent);
+        txtGoalReached = view.findViewById(R.id.txtGoalReached);
         editWaterGoal = view.findViewById(R.id.editWaterGoal);
         editCustomWater = view.findViewById(R.id.editCustomWater);
         summaryChart = view.findViewById(R.id.summaryChart);
@@ -246,8 +250,19 @@ public class WaterFragment extends Fragment {
         String progressText = current + " / " + goal + " ml";
         txtProgress.setText(progressText);
 
+        if (txtProgressPercent != null) {
+            int percent = (goal > 0) ? (current * 100 / goal) : 0;
+            txtProgressPercent.setText("%" + percent);
+        }
+
         if (current >= goal && goal > 0) {
-            txtProgress.append("\nHarika! Günlük hedefe ulaştın.");
+            if (txtGoalReached != null) {
+                txtGoalReached.setVisibility(View.VISIBLE);
+            }
+        } else {
+            if (txtGoalReached != null) {
+                txtGoalReached.setVisibility(View.GONE);
+            }
         }
     }
 

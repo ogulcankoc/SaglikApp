@@ -1,6 +1,8 @@
 package com.example.saglikapp.ui;
 
 import android.Manifest;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -23,6 +25,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.saglikapp.R;
+import com.example.saglikapp.data.AppDatabase;
+import com.example.saglikapp.data.HeartRateLog;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -48,6 +52,7 @@ public class HeartRateActivity extends AppCompatActivity {
     private TextView textBPM;
     private ProgressBar progressBar;
     private Button btnStartStop;
+    private Button btnHistory;
     private LineChart chart;
 
     private ExecutorService cameraExecutor;
@@ -85,6 +90,7 @@ public class HeartRateActivity extends AppCompatActivity {
         textBPM = findViewById(R.id.textBPM);
         progressBar = findViewById(R.id.progressBar);
         btnStartStop = findViewById(R.id.btnStartStop);
+        btnHistory = findViewById(R.id.btnHistory);
         chart = findViewById(R.id.chart);
 
         setupChart();
@@ -99,6 +105,10 @@ public class HeartRateActivity extends AppCompatActivity {
                     ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
                 }
             }
+        });
+
+        btnHistory.setOnClickListener(v -> {
+            startActivity(new Intent(this, HeartRateHistoryActivity.class));
         });
 
         cameraExecutor = Executors.newSingleThreadExecutor();
@@ -280,7 +290,9 @@ public class HeartRateActivity extends AppCompatActivity {
                 }
 
                 if (totalTimeInSecs >= measurementDurationSec) {
-                    Toast.makeText(HeartRateActivity.this, "Ölçüm Tamamlandı", Toast.LENGTH_SHORT).show();
+                    int finalBpm = Integer.parseInt(textBPM.getText().toString());
+                    saveHeartRate(finalBpm);
+                    Toast.makeText(HeartRateActivity.this, "Ölçüm Tamamlandı: " + finalBpm + " BPM", Toast.LENGTH_SHORT).show();
                     stopMeasurement();
                 }
             }
@@ -352,6 +364,20 @@ public class HeartRateActivity extends AppCompatActivity {
                 chart.invalidate();
             }
         }
+    }
+
+    private void saveHeartRate(int bpm) {
+        // 1. SharedPreferences'a Kaydet (Ana ekran için)
+        SharedPreferences prefs = getSharedPreferences("UserData", MODE_PRIVATE);
+        prefs.edit().putInt("lastBPM", bpm).apply();
+
+        // 2. Veritabanına Kaydet (Geçmiş için)
+        long timestamp = System.currentTimeMillis();
+        HeartRateLog log = new HeartRateLog(bpm, timestamp);
+        
+        Executors.newSingleThreadExecutor().execute(() -> {
+            AppDatabase.getInstance(this).heartRateDao().insert(log);
+        });
     }
 
     private boolean allPermissionsGranted() {

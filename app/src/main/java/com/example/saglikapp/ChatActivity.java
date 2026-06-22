@@ -26,19 +26,15 @@ public class ChatActivity extends AppCompatActivity {
     private ImageButton sendButton;
     private LlmManager llmManager;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Klavye ayarı — setContentView'dan ÖNCE
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-
         setContentView(R.layout.activity_chat);
 
         hideSystemUI();
 
-        // Klavye açılınca input alanının görünür kalması için insets dinleyici
         ViewCompat.setOnApplyWindowInsetsListener(
                 findViewById(android.R.id.content),
                 (v, insets) -> {
@@ -84,26 +80,43 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onSuccess() {
                 runOnUiThread(() -> {
-                    sendButton.setEnabled(true);
+                    if (isDestroyed() || isFinishing()) return;
 
-                    // Hangi mod aktif olduğunu göster
+                    sendButton.setEnabled(true);
                     String mod = llmManager.getCurrentMode() == LlmManager.Mode.LOCAL
                             ? "Yerel model aktif 📱" : "Bulut model aktif ☁️";
                     Toast.makeText(ChatActivity.this, mod, Toast.LENGTH_SHORT).show();
 
-                    messageList.add(new MessageModel(
-                            "Merhaba! Ben senin kişisel sağlık asistanınım. Bugün sana nasıl yardımcı olabilirim?",
-                            false
-                    ));
-                    chatAdapter.notifyItemInserted(messageList.size() - 1);
+                    // Mood verisi gelmiş mi kontrol et
+                    String moodEmoji = getIntent().getStringExtra("mood_emoji");
+                    String moodText = getIntent().getStringExtra("mood_text");
+                    String prefilledMessage = getIntent().getStringExtra("user_message");
+
+                    if (moodEmoji != null && prefilledMessage != null) {
+                        // Kullanıcı sanki yazmış gibi mesajı gönder
+                        messageList.add(new MessageModel(prefilledMessage, true));
+                        chatAdapter.notifyItemInserted(messageList.size() - 1);
+                        chatRecyclerView.scrollToPosition(messageList.size() - 1);
+                        
+                        // AI yanıtını tetikle
+                        processMoodMessage(moodEmoji, moodText, prefilledMessage);
+                    } else {
+                        messageList.add(new MessageModel(
+                                "Merhaba! Ben senin kişisel sağlık asistanınım. Bugün sana nasıl yardımcı olabilirim?",
+                                false
+                        ));
+                        chatAdapter.notifyItemInserted(messageList.size() - 1);
+                    }
                 });
             }
 
             @Override
             public void onError(String error) {
-                runOnUiThread(() ->
-                        Toast.makeText(ChatActivity.this, "Hata: " + error, Toast.LENGTH_LONG).show()
-                );
+                runOnUiThread(() -> {
+                    if (!isDestroyed() && !isFinishing()) {
+                        Toast.makeText(ChatActivity.this, "Hata: " + error, Toast.LENGTH_LONG).show();
+                    }
+                });
             }
         });
 
@@ -147,7 +160,19 @@ public class ChatActivity extends AppCompatActivity {
         chatRecyclerView.scrollToPosition(messageList.size() - 1);
         messageEditText.setText("");
 
-        // "Düşünüyor..." ile başlat
+        generateAiResponse(userMessage);
+    }
+
+    private void processMoodMessage(String emoji, String moodText, String prefilledMessage) {
+        // Mood için özelleştirilmiş bir AI isteği atalım
+        String promptWithMood = "Kullanıcı şu an kendini [" + moodText + " " + emoji + "] hissediyor. " +
+                "Kullanıcının bu mesajına yanıt ver: \"" + prefilledMessage + "\". " +
+                "Yanıtında kullanıcının sağlık verilerini (su, nabız vb.) de göz önünde bulundur ve mutlaka 'Hızlı bir aksiyon' önerisi (nefes egzersizi, su artışı, kısa yürüyüş vb.) yap.";
+        
+        generateAiResponse(promptWithMood);
+    }
+
+    private void generateAiResponse(String messageToSend) {
         MessageModel botMessage = new MessageModel("⏳ Düşünüyor...", false);
         messageList.add(botMessage);
         int botMessagePosition = messageList.size() - 1;
@@ -156,14 +181,16 @@ public class ChatActivity extends AppCompatActivity {
         sendButton.setEnabled(false);
         sendButton.setAlpha(0.5f);
 
-        final boolean[] firstToken = {true};  // İlk token gelince "Düşünüyor..." temizle
+        final boolean[] firstToken = {true};
 
-        llmManager.generateStreamingResponse(userMessage, new LlmService.OnStreamingResponseListener() {
+        llmManager.generateStreamingResponse(messageToSend, new LlmService.OnStreamingResponseListener() {
             @Override
             public void onTokenReceived(String token) {
                 runOnUiThread(() -> {
+                    if (isDestroyed() || isFinishing()) return;
+
                     if (firstToken[0]) {
-                        botMessage.setText(token);   // "Düşünüyor..." yerine yaz
+                        botMessage.setText(token);
                         firstToken[0] = false;
                     } else {
                         botMessage.setText(botMessage.getText() + token);
@@ -176,6 +203,7 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onComplete() {
                 runOnUiThread(() -> {
+                    if (isDestroyed() || isFinishing()) return;
                     sendButton.setEnabled(true);
                     sendButton.setAlpha(1.0f);
                 });
@@ -184,6 +212,7 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
+                    if (isDestroyed() || isFinishing()) return;
                     botMessage.setText("⚠️ " + error);
                     chatAdapter.notifyItemChanged(botMessagePosition);
                     sendButton.setEnabled(true);
@@ -191,5 +220,14 @@ public class ChatActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Ekran kapatıldığında arka plandaki modelin hafızasını sıfırla
+        if (llmManager != null) {
+            llmManager.clearHistory();
+        }
     }
 }

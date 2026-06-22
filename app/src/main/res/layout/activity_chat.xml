@@ -20,7 +20,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
+            android:layout_marginStart="15dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Geri"
             android:src="@android:drawable/ic_menu_revert"
@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Akıllı Sağlık Asistanı 🤖"
+            android:text="Sağlık Takip Asistanım "
             android:textColor="#FFFFFF"
             android:textSize="18sp"
             android:textStyle="bold" />

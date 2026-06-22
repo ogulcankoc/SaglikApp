@@ -20,7 +20,10 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.saglikapp.ChatActivity;
 import com.example.saglikapp.LlmService;
 import com.example.saglikapp.R;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.example.saglikapp.utils.WeatherService;
+
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,7 +44,6 @@ public class HomeFragment extends Fragment {
     private TextView textQuoteSource;
     private ProgressBar pbAnalysis;
 
-    // Hazır sözler listesi (AI meşgulken veya yeni gün geldiğinde gösterilir)
     private final String[] backupQuotes = {
             "Bugün harika bir gün olacak, adım atmaya devam et!",
             "Küçük adımlar, büyük sonuçlar doğurur.",
@@ -64,7 +66,6 @@ public class HomeFragment extends Fragment {
             waterViewModel = new ViewModelProvider(this).get(WaterViewModel.class);
         }
 
-        // Singleton kullanımı
         llmManager = LlmManager.getInstance(getContext());
 
         TextView textWelcome = view.findViewById(R.id.textWelcome);
@@ -98,10 +99,40 @@ public class HomeFragment extends Fragment {
             startActivity(new Intent(getContext(), ChatActivity.class));
         });
 
-        // Yapay Zeka Görevlerini Başlat
+        // Mood Butonları
+        view.findViewById(R.id.btnMoodBad).setOnClickListener(v -> openChatWithMood("😞"));
+        view.findViewById(R.id.btnMoodNeutral).setOnClickListener(v -> openChatWithMood("😐"));
+        view.findViewById(R.id.btnMoodGood).setOnClickListener(v -> openChatWithMood("😊"));
+
         startSequentialAiTasks();
 
         return view;
+    }
+
+    private void openChatWithMood(String emoji) {
+        String moodText = "";
+        String userMessage = "";
+        
+        switch (emoji) {
+            case "😞":
+                moodText = "kötü";
+                userMessage = "Kendimi biraz kötü hissediyorum, verilerime bakıp bir değerlendirme yapar mısın? Bana ne önerirsin?";
+                break;
+            case "😐":
+                moodText = "nötr";
+                userMessage = "Bugün biraz durgunum. Sağlık verilerime göre enerjimi toplamak için ne yapabilirim?";
+                break;
+            case "😊":
+                moodText = "iyi";
+                userMessage = "Bugün kendimi harika hissediyorum! Bu enerjimi korumak için bugün nelere odaklanmalıyım?";
+                break;
+        }
+
+        Intent intent = new Intent(getContext(), ChatActivity.class);
+        intent.putExtra("mood_emoji", emoji);
+        intent.putExtra("mood_text", moodText);
+        intent.putExtra("user_message", userMessage);
+        startActivity(intent);
     }
 
     private void showInitialQuote() {
@@ -122,34 +153,83 @@ public class HomeFragment extends Fragment {
         if (getContext() == null || textAiAnalysis == null) return;
         
         pbAnalysis.setVisibility(View.VISIBLE);
-        textAiAnalysis.setText("Analiz yapılıyor...");
+        textAiAnalysis.setText("Veriler hazırlanıyor...");
 
-        llmManager.initialize(new LlmService.OnModelLoadedListener() {
+        if (!isNetworkAvailable()) {
+            // İnternet yoksa direkt analize geç
+            loadLlmAndPerformAnalysis("Hava durumu bilgisi şu an yok (çevrimdışı)");
+            return;
+        }
+
+        SharedPreferences prefs = getContext().getSharedPreferences("UserData", Context.MODE_PRIVATE);
+        String city = prefs.getString("city", "Istanbul");
+        
+        WeatherService weatherService = new WeatherService(getContext());
+        weatherService.fetchWeather(city, new WeatherService.WeatherCallback() {
             @Override
-            public void onSuccess() {
-                android.util.Log.d("HomeFragment", "Model yüklendi, sırayla analiz ve söz başlıyor...");
-                performAnalysisThenQuote();
+            public void onSuccess(String currentWeather, String tomorrowWeather) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        String combinedWeather = currentWeather + " | " + tomorrowWeather;
+                        loadLlmAndPerformAnalysis(combinedWeather);
+                    });
+                }
             }
 
             @Override
             public void onError(String error) {
-                android.util.Log.e("HomeFragment", "Analiz hatası: " + error);
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> loadLlmAndPerformAnalysis("Hava durumu bilgisi alınamadı"));
+                }
+            }
+        });
+    }
+
+    private boolean isNetworkAvailable() {
+        if (getContext() == null) return false;
+        ConnectivityManager cm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            android.net.Network network = cm.getActiveNetwork();
+            if (network == null) return false;
+            NetworkCapabilities capabilities = cm.getNetworkCapabilities(network);
+            return capabilities != null && (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) 
+                    || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                    || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
+        } else {
+            android.net.NetworkInfo activeNetworkInfo = cm.getActiveNetworkInfo();
+            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        }
+    }
+
+    private void loadLlmAndPerformAnalysis(String weatherInfo) {
+        if (getContext() == null) return;
+        textAiAnalysis.setText("Analiz yapılıyor...");
+        
+        llmManager.initialize(new LlmService.OnModelLoadedListener() {
+            @Override
+            public void onSuccess() {
+                performAnalysisThenQuote(weatherInfo);
+            }
+
+            @Override
+            public void onError(String error) {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         pbAnalysis.setVisibility(View.GONE);
-                        textAiAnalysis.setText("Yapay zeka asistanı şu an meşgul veya yüklenemedi.");
+                        textAiAnalysis.setText("Yapay zeka asistanı şu an meşgul.");
                     });
                 }
             }
         });
     }
 
-    private void performAnalysisThenQuote() {
+    private void performAnalysisThenQuote(String weatherInfo) {
         if (getContext() == null) return;
         
         SharedPreferences prefs = getContext().getSharedPreferences("UserData", Context.MODE_PRIVATE);
         
-        // Verileri Topla
         String name = prefs.getString("name", "Kullanıcı");
         String weight = prefs.getString("weight", "70");
         String height = prefs.getString("height", "170");
@@ -162,7 +242,6 @@ public class HomeFragment extends Fragment {
         int waterLeft = Math.max(0, waterGoal - water);
         int lastBpm = prefs.getInt("lastBPM", 0);
 
-        // BMI Hesapla
         try {
             double h = Double.parseDouble(height);
             double w = Double.parseDouble(weight);
@@ -173,18 +252,19 @@ public class HomeFragment extends Fragment {
         double bmi = bmiViewModel.getBmi();
         String currentTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
 
-        // 1. GÖREV: ANALİZ (Gelişmiş Prompt)
         String prompt = String.format(Locale.getDefault(),
                 "Kullanıcı Bilgileri:\n" +
                 "- İsim: %s\n" +
                 "- Şu anki saat: %s\n" +
+                "- Hava Durumu: %s\n" +
                 "- Mevcut Su: %d ml / Hedef: %d ml (Kalan: %d ml)\n" +
                 "- Son Kalp Ritmi: %d BPM\n" +
                 "- VKİ (BMI): %.1f\n" +
                 "- Planlanan Yatış Saati: %s\n\n" +
-                "Görev: Maksimum 3 cümle olacak şekilde: Kullanıcıya ismen hitap et. Su miktarını ve yatış saatine kalan süreyi düşünerek " +
-                "sayısal veriler de içeren, motivasyonel ve bilimsel bir sağlık tavsiyesi ver ve kalp ritmini yorumla. (maksimum 30 kelime).",
-                name, currentTime, water, waterGoal, waterLeft, lastBpm, bmi, bedTime);
+                "Görev: Kullanıcıya ismen hitap et. Motive edici ol. Hava durumunu, su miktarını ve sağlığını harmanla. " +
+                "Güncel hava durumununa göre tavsiye ver daha sonra yarınki minimum/maksimum sıcaklıkları dikkate alarak yarınki hava durumuna göre kıyafet ve su tüketimi tavsiyesi ver. " +
+                "Sayısal veriler içeren, kısa, öz ve net bir sağlık tavsiyesi ver ve kalp ritmini de yorumla. Yorumlarını çok uzatma mümkün oldukça kısa cümleler kullan. ",
+                name, currentTime, weatherInfo, water, waterGoal, waterLeft, lastBpm, bmi, bedTime);
 
         llmManager.generateResponse(prompt, new LlmService.OnResponseListener() {
             @Override
@@ -194,8 +274,6 @@ public class HomeFragment extends Fragment {
                         pbAnalysis.setVisibility(View.GONE);
                         String cleanResponse = response.replace("<|turn|>model\n", "").replace("<turn|>", "").trim();
                         textAiAnalysis.setText(cleanResponse);
-                        
-                        // ANALİZ BİTTİ: ŞİMDİ SÖZÜ GÜNCELLEYELİM
                         refreshDailyQuoteIfNecessary();
                     });
                 }
@@ -223,9 +301,8 @@ public class HomeFragment extends Fragment {
 
         if (today.equals(lastDate)) return;
 
-        // 2. GÖREV: YENİ SÖZ ÜRET
-        String quotePrompt = "Kullanıcıya güne enerjik başlaması için çok kısa (maksimum 20 kelime), " +
-                "ilham verici bir sağlık mottosu söyle. Sadece sözü yaz.";
+        String quotePrompt = "Kullanıcıya çok kısa (maksimum 30 kelime), " +
+                "ilham verici bir yaşam mottosu söyle. Sadece sözü yaz. Varsa sözü söyleyen kişinin ismini de ekle";
 
         llmManager.generateResponse(quotePrompt, new LlmService.OnResponseListener() {
             @Override

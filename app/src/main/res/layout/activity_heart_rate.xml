@@ -72,6 +72,14 @@
         android:layout_height="wrap_content"
         android:text="Ölçümü Başlat"
         android:backgroundTint="@color/blue"
-        android:textColor="@android:color/white"/>
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btnHistory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Geçmişi Görüntüle"
+        style="@style/Widget.MaterialComponents.Button.TextButton"/>
 
 </LinearLayout>

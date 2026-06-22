@@ -1,6 +1,7 @@
 package com.example.saglikapp.ui;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -27,6 +28,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.saglikapp.R;
+import com.example.saglikapp.data.AppDatabase;
+import com.example.saglikapp.data.HeartRateLog;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -52,6 +55,7 @@ public class HeartFragment extends Fragment {
     private TextView textBPM;
     private ProgressBar progressBar;
     private Button btnStartStop;
+    private Button btnHistory;
     private LineChart chart;
 
     private ExecutorService cameraExecutor;
@@ -87,6 +91,7 @@ public class HeartFragment extends Fragment {
         textBPM = view.findViewById(R.id.textBPM);
         progressBar = view.findViewById(R.id.progressBar);
         btnStartStop = view.findViewById(R.id.btnStartStop);
+        btnHistory = view.findViewById(R.id.btnHistory);
         chart = view.findViewById(R.id.chart);
 
         setupChart();
@@ -101,6 +106,10 @@ public class HeartFragment extends Fragment {
                     requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
                 }
             }
+        });
+
+        btnHistory.setOnClickListener(v -> {
+            startActivity(new Intent(getContext(), HeartRateHistoryActivity.class));
         });
 
         cameraExecutor = Executors.newSingleThreadExecutor();
@@ -291,7 +300,9 @@ public class HeartFragment extends Fragment {
                     }
 
                     if (totalTimeInSecs >= measurementDurationSec) {
-                        Toast.makeText(getContext(), "Ölçüm Tamamlandı", Toast.LENGTH_SHORT).show();
+                        int finalBpm = Integer.parseInt(textBPM.getText().toString());
+                        saveHeartRate(finalBpm);
+                        Toast.makeText(getContext(), "Ölçüm Tamamlandı: " + finalBpm + " BPM", Toast.LENGTH_SHORT).show();
                         stopMeasurement();
                     }
                 }
@@ -300,6 +311,26 @@ public class HeartFragment extends Fragment {
 
         processing.set(false);
         image.close();
+    }
+
+    private void saveHeartRate(int bpm) {
+        // 1. SharedPreferences'a Kaydet (Ana ekran için)
+        if (getContext() != null) {
+            getContext().getSharedPreferences("UserData", android.content.Context.MODE_PRIVATE)
+                    .edit()
+                    .putInt("lastBPM", bpm)
+                    .apply();
+        }
+
+        // 2. Veritabanına Kaydet (Geçmiş için)
+        long timestamp = System.currentTimeMillis();
+        HeartRateLog log = new HeartRateLog(bpm, timestamp);
+        
+        Executors.newSingleThreadExecutor().execute(() -> {
+            if (getContext() != null) {
+                AppDatabase.getInstance(getContext()).heartRateDao().insert(log);
+            }
+        });
     }
 
     private int decodeYUV420SPtoRedAvg(ImageProxy image) {

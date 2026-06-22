@@ -6,6 +6,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -15,6 +18,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.example.saglikapp.R;
 
@@ -41,7 +46,20 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Klavye ayarı — setContentView'dan ÖNCE
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+
         setContentView(R.layout.activity_settings);
+
+        // Klavye açılınca input alanının görünür kalması için insets dinleyici
+        View root = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            int navHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            v.setPadding(0, 0, 0, Math.max(imeHeight, navHeight));
+            return insets;
+        });
 
         Switch switchDarkMode = findViewById(R.id.switchDarkMode);
         EditText editWaterInterval = findViewById(R.id.editWaterInterval);
@@ -51,6 +69,16 @@ public class SettingsActivity extends AppCompatActivity {
         EditText editFallAsleep = findViewById(R.id.editFallAsleepDuration);
         EditText editCycle = findViewById(R.id.editCycleDuration);
         Button btnSaveSleep = findViewById(R.id.btnSaveSleepSettings);
+        
+        EditText editServerUrl = findViewById(R.id.editServerUrl);
+        Button btnSaveServerUrl = findViewById(R.id.btnSaveServerUrl);
+
+        EditText editApiKey = findViewById(R.id.editApiKey);
+        Button btnSaveApiKey = findViewById(R.id.btnSaveApiKey);
+
+        android.widget.Spinner spinnerCity = findViewById(R.id.spinnerCity);
+        Button btnSaveCity = findViewById(R.id.btnSaveCity);
+
         tvModelStatus = findViewById(R.id.tvModelStatus);
         pbDownload = findViewById(R.id.pbDownload);
         btnDownloadModel = findViewById(R.id.btnDownloadModel);
@@ -110,6 +138,59 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         btnGoProfile.setOnClickListener(v -> startActivity(new Intent(this, ProfileActivity.class)));
+
+        // Sunucu URL Ayarı
+        String currentUrl = prefs.getString("remote_llm_url", "https://openrouter.ai/api/v1");
+        editServerUrl.setText(currentUrl);
+        btnSaveServerUrl.setOnClickListener(v -> {
+            String newUrl = editServerUrl.getText().toString().trim();
+            if (!newUrl.isEmpty() && (newUrl.startsWith("http://") || newUrl.startsWith("https://"))) {
+                prefs.edit().putString("remote_llm_url", newUrl).apply();
+                Toast.makeText(this, "Sunucu adresi kaydedildi!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Geçerli bir URL girin (http/https ile başlamalı).", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // API Key Ayarı
+        String defaultApiKey = com.example.saglikapp.BuildConfig.OPENROUTER_API_KEY;
+        String currentApiKey = prefs.getString("openrouter_api_key", defaultApiKey);
+        editApiKey.setText(currentApiKey);
+        
+        // Eğer SharedPreferences'ta henüz anahtar yoksa (ilk açılış), varsayılanı kaydet
+        if (!prefs.contains("openrouter_api_key")) {
+            prefs.edit().putString("openrouter_api_key", defaultApiKey).apply();
+        }
+
+        btnSaveApiKey.setOnClickListener(v -> {
+            String newKey = editApiKey.getText().toString().trim();
+            if (!newKey.isEmpty()) {
+                prefs.edit().putString("openrouter_api_key", newKey).apply();
+                Toast.makeText(this, "API Key kaydedildi!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Lütfen bir API Key girin.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Şehir Ayarı (Spinner ile)
+        String[] cities = {"Istanbul","Balıkesir","Bandırma", "Ankara", "Izmir", "Bursa","Erdek", "Antalya", "Adana", "Konya", "Gaziantep", "Mersin", "Diyarbakir"};
+        android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_item, cities);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCity.setAdapter(adapter);
+
+        String currentCity = prefs.getString("city", "Istanbul");
+        for (int i = 0; i < cities.length; i++) {
+            if (cities[i].equals(currentCity)) {
+                spinnerCity.setSelection(i);
+                break;
+            }
+        }
+
+        btnSaveCity.setOnClickListener(v -> {
+            String selectedCity = spinnerCity.getSelectedItem().toString();
+            prefs.edit().putString("city", selectedCity).apply();
+            Toast.makeText(this, "Şehir kaydedildi: " + selectedCity, Toast.LENGTH_SHORT).show();
+        });
 
         checkModelStatus();
         btnDownloadModel.setOnClickListener(v -> startModelDownload());

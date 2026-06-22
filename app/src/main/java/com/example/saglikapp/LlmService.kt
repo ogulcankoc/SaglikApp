@@ -19,7 +19,7 @@ class LlmService private constructor(context: Context) {
         @Volatile
         private var instance: LlmService? = null
 
-        @JvmStatic  // BU SATIRI EKLE
+        @JvmStatic
         fun getInstance(context: Context): LlmService {
             return instance ?: synchronized(this) {
                 instance ?: LlmService(context).also { instance = it }
@@ -35,25 +35,13 @@ class LlmService private constructor(context: Context) {
     private val pendingListeners = mutableListOf<OnModelLoadedListener>()
 
     private val modelFilename = "gemma-4-E2B-it.litertlm"
-    private var systemInstruction = "Sen bu uygulamanın resmi akıllı sağlık asistanısın. " +
-            "Görevin kullanıcının verilerine göre kısa tavsiyeler vermektir. Türkçe cevap ver."
+    private var systemInstruction = "Sen bu uygulamanın resmi akıllı sağlık asistanısın."
 
     fun initializeModel(customInstruction: String, listener: OnModelLoadedListener) {
         this.systemInstruction = customInstruction
         if (isModelLoaded) {
-            // Eğer model zaten yüklüyse, yeni talimatla yeni bir konuşma başlatmamız gerekebilir
-            // Ancak şu anki yapıda Conversation singleton gibi davranıyor.
-            // Basitlik adına, her initialize çağrısında conversation'ı yenileyebiliriz.
-            try {
-                conversation?.close()
-                val convConfig = ConversationConfig(
-                    systemInstruction = Contents.of(systemInstruction)
-                )
-                conversation = engine?.createConversation(convConfig)
-                listener.onSuccess()
-            } catch (e: Exception) {
-                listener.onError("Talimat güncelleme hatası: ${e.message}")
-            }
+            clearHistory() // Yeni talimatla temiz bir başlangıç
+            listener.onSuccess()
             return
         }
         synchronized(pendingListeners) {
@@ -65,10 +53,6 @@ class LlmService private constructor(context: Context) {
         Thread {
             try {
                 val modelFile = File(appContext.filesDir, modelFilename)
-                android.util.Log.d("LlmService", "Model yolu: ${modelFile.absolutePath}")
-                android.util.Log.d("LlmService", "Model mevcut: ${modelFile.exists()}")
-                android.util.Log.d("LlmService", "Model boyutu: ${modelFile.length()}")
-
                 if (!modelFile.exists()) {
                     notifyError("Model dosyası bulunamadı. Lütfen Ayarlar'dan indirin.")
                     return@Thread
@@ -82,9 +66,7 @@ class LlmService private constructor(context: Context) {
                     cacheDir = cacheDir.absolutePath
                 )
 
-                android.util.Log.d("LlmService", "Engine başlatılıyor...")
                 engine = Engine(engineConfig).also { it.initialize() }
-                android.util.Log.d("LlmService", "Engine hazır")
 
                 val convConfig = ConversationConfig(
                     systemInstruction = Contents.of(systemInstruction)
@@ -101,6 +83,25 @@ class LlmService private constructor(context: Context) {
         }.start()
     }
 
+    // Yerel modelin hafızasını temizler
+    fun clearHistory() {
+        if (!isModelLoaded || engine == null) return
+        try {
+            conversation?.close()
+            val convConfig = ConversationConfig(
+                systemInstruction = Contents.of(systemInstruction)
+            )
+            conversation = engine?.createConversation(convConfig)
+        } catch (e: Exception) {
+            android.util.Log.e("LlmService", "Geçmiş temizlenirken hata: ${e.message}")
+        }
+    }
+
+    fun updatePrompt(newPrompt: String) {
+        this.systemInstruction = newPrompt
+        clearHistory()
+    }
+
     fun generateStreamingResponse(userMessage: String, listener: OnStreamingResponseListener) {
         if (!isModelLoaded || conversation == null) {
             listener.onError("Yapay zeka hazır değil.")
@@ -108,7 +109,6 @@ class LlmService private constructor(context: Context) {
         }
         try {
             val message = Message.Companion.user(Contents.of(userMessage))
-
             conversation!!.sendMessageAsync(
                 message = message,
                 callback = object : MessageCallback {

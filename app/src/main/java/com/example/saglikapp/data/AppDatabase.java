@@ -6,13 +6,14 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 
-@Database(entities = {WaterLog.class}, version = 1, exportSchema = false)
+@Database(entities = {WaterLog.class, HeartRateLog.class}, version = 2, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     private static volatile AppDatabase instance;
 
     // DAO'lara erişim için soyut metodlar
     public abstract WaterDao waterDao();
+    public abstract HeartRateDao heartRateDao();
     
 
 
@@ -24,8 +25,10 @@ public abstract class AppDatabase extends RoomDatabase {
                     instance = Room.databaseBuilder(
                             context.getApplicationContext(),
                             AppDatabase.class,
-                            "saglik_database" // Veritabanı dosyasının adı da genellendi
-                    ).build();
+                            "saglik_database"
+                    )
+                    .fallbackToDestructiveMigration() // Veritabanı şeması değiştiğinde eski verileri silip yenisini kurar
+                    .build();
                 }
             }
         }

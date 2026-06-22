@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 import io.noties.markwon.Markwon;
+import io.noties.markwon.ext.tables.TablePlugin;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -19,7 +20,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public ChatAdapter(List<MessageModel> messageList, Context context) {
         this.messageList = messageList;
-        this.markwon = Markwon.create(context);
+        this.markwon = Markwon.builder(context)
+                .usePlugin(TablePlugin.create(context))
+                .build();
     }
 
     @Override
